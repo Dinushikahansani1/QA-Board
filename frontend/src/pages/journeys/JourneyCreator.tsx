@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Paper, Alert } from '@mui/material';
 import JourneyForm from './JourneyForm';
-import { createJourney, JourneyStep } from '../../api/journeys';
+import { createJourney, type JourneyStep } from '../../api/journeys';
 
 export default function JourneyCreator() {
   const navigate = useNavigate();

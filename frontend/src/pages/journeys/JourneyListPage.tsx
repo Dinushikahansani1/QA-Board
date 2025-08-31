@@ -17,7 +17,7 @@ import {
   Chip,
 } from '@mui/material';
 import { Add, Edit, Delete, PlayArrow, Visibility } from '@mui/icons-material';
-import { getJourneys, deleteJourney, runJourney, Journey } from '../../api/journeys';
+import { getJourneys, deleteJourney, runJourney, type Journey } from '../../api/journeys';
 
 export default function JourneyListPage() {
   const [journeys, setJourneys] = useState<Journey[]>([]);

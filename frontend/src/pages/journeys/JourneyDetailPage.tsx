@@ -14,7 +14,7 @@ import {
   Chip,
   Button,
 } from '@mui/material';
-import { getJourney, Journey } from '../../api/journeys';
+import { getJourney, type Journey } from '../../api/journeys';
 import { ArrowBack } from '@mui/icons-material';
 
 export default function JourneyDetailPage() {
