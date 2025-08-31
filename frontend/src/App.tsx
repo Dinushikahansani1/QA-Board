@@ -2,6 +2,7 @@ import React from 'react';
 import { Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Login from './pages/Login';
+import Register from './pages/Register';
 import { Box, Button } from '@mui/material';
 
 const Protected: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -25,6 +26,7 @@ function AppInner() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route path="/" element={<Protected><DashboardStub /></Protected>} />
     </Routes>
   );

@@ -4,12 +4,12 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 router.post('/register', async (req, res) => {
-  const { email, password, role } = req.body || {};
+  const { email, password } = req.body || {};
   if (!email || !password) return res.status(400).json({ error: 'Missing email or password' });
   const exists = await User.findOne({ email });
   if (exists) return res.status(409).json({ error: 'Email already in use' });
   const passwordHash = await bcrypt.hash(password, 10);
-  const user = await User.create({ email, passwordHash, role: role || 'admin' });
+  const user = await User.create({ email, passwordHash });
   res.json({ id: user._id, email: user.email, role: user.role });
 });
 

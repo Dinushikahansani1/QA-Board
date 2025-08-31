@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Box, Button, Card, CardContent, TextField, Typography, Alert } from '@mui/material';
 
-export default function Login() {
-  const { login } = useAuth();
-  const [email, setEmail] = useState('admin@example.com');
-  const [password, setPassword] = useState('changeme');
+export default function Register() {
+  const { register } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -16,10 +16,10 @@ export default function Login() {
     setError(null);
     setLoading(true);
     try {
-      await login(email, password);
+      await register(email, password);
       navigate('/');
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      setError(err.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -29,7 +29,7 @@ export default function Login() {
     <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', p: 2 }}>
       <Card sx={{ width: 360 }}>
         <CardContent>
-          <Typography variant="h6" sx={{ mb: 2 }}>Sign in to CX Quality Monitor</Typography>
+          <Typography variant="h6" sx={{ mb: 2 }}>Create a new account</Typography>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           <Box component="form" onSubmit={onSubmit} sx={{ display: 'grid', gap: 2 }}>
             <TextField
@@ -49,15 +49,9 @@ export default function Login() {
               required
             />
             <Button type="submit" variant="contained" disabled={loading}>
-              {loading ? 'Signing in...' : 'Sign in'}
+              {loading ? 'Creating account...' : 'Create account'}
             </Button>
           </Box>
-          <Typography variant="caption" sx={{ mt: 2, display: 'block', color: 'text.secondary' }}>
-            Use the seeded account <b>admin@example.com</b> / <b>changeme</b>
-          </Typography>
-          <Typography variant="caption" sx={{ mt: 2, display: 'block', color: 'text.secondary' }}>
-            Don't have an account? <Link to="/register">Register</Link>
-          </Typography>
         </CardContent>
       </Card>
     </Box>
