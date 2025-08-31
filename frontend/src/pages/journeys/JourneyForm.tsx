@@ -13,7 +13,7 @@ import {
   Grid,
 } from '@mui/material';
 import { AddCircle, Delete } from '@mui/icons-material';
-import { JourneyStep } from '../../api/journeys';
+import type { JourneyStep } from '../../api/journeys';
 
 interface JourneyFormProps {
   onSubmit: (data: { name: string; steps: JourneyStep[] }) => void;

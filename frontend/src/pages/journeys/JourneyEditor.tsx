@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Box, Typography, Paper, Alert, CircularProgress } from '@mui/material';
 import JourneyForm from './JourneyForm';
-import { getJourney, updateJourney, Journey, JourneyStep } from '../../api/journeys';
+import { getJourney, updateJourney, type Journey, type JourneyStep } from '../../api/journeys';
 
 export default function JourneyEditor() {
   const { id } = useParams<{ id: string }>();
