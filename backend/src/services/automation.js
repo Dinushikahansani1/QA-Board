@@ -20,17 +20,35 @@ async function runJourney(journey) {
   try {
     for (const step of journey.steps) {
       logs.push(`Executing action: ${step.action} with params: ${JSON.stringify(step.params)}`);
+
+      // Helper function to get a locator object safely from either a string or our structured object
+      const getLocator = (selector) => {
+        if (typeof selector === 'object' && selector.method && Array.isArray(selector.args)) {
+          // It's our structured locator from the parser
+          if (typeof page[selector.method] === 'function') {
+            return page[selector.method](...selector.args);
+          } else {
+            throw new Error(`Unsupported locator method: ${selector.method}`);
+          }
+        }
+        // It's a simple string selector for manually created steps
+        return page.locator(selector);
+      };
+
       switch (step.action) {
         case 'goto':
           await page.goto(step.params.url);
           break;
         case 'click':
-          await page.click(step.params.selector);
+          const clickLocator = getLocator(step.params.selector);
+          await clickLocator.click();
           break;
         case 'type':
-          await page.type(step.params.selector, step.params.text);
+          const typeLocator = getLocator(step.params.selector);
+          await typeLocator.fill(step.params.text); // Using fill is more robust for locators
           break;
         case 'waitForSelector':
+          // This action is more for manual creation, recorded journeys will have better waits.
           await page.waitForSelector(step.params.selector);
           break;
         default:

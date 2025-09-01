@@ -14,7 +14,7 @@ import {
   Chip,
   Button,
 } from '@mui/material';
-import { getJourney, type Journey } from '../../api/journeys';
+import { getJourney, type Journey, type TestResult } from '../../api/journeys';
 import { ArrowBack } from '@mui/icons-material';
 
 export default function JourneyDetailPage() {
@@ -122,6 +122,26 @@ export default function JourneyDetailPage() {
             </ListItem>
           ))}
         </List>
+
+        {journey.lastRun?.testResult && (
+          <>
+            <Divider sx={{ my: 2 }} />
+            <Typography variant="h6" gutterBottom>
+              Last Run Details
+            </Typography>
+            <Paper sx={{ p: 2, mt: 1, backgroundColor: '#f5f5f5', maxHeight: '400px', overflow: 'auto' }}>
+              <Typography variant="body1" sx={{ fontWeight: 'bold' }}>Logs:</Typography>
+              <Box component="pre" sx={{ m: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                {journey.lastRun.testResult.logs}
+              </Box>
+              {journey.lastRun.testResult.screenshot && (
+                <Typography variant="body1" sx={{ mt: 2 }}>
+                  <span style={{ fontWeight: 'bold' }}>Screenshot Path:</span> {journey.lastRun.testResult.screenshot}
+                </Typography>
+              )}
+            </Paper>
+          </>
+        )}
       </Paper>
     </Box>
   );

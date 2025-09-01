@@ -1,13 +1,25 @@
 import api from './axios';
 
-// Basic types for Journey data. These should match the backend models.
+// This selector type can be a simple string (for manual journeys)
+// or a structured object (for imported/recorded journeys)
+type Selector = string | { method: string; args: any[] };
+
 export interface JourneyStep {
   action: 'goto' | 'click' | 'type' | 'waitForSelector';
   params: {
-    selector?: string;
+    selector?: Selector;
     url?: string;
     text?: string;
   };
+}
+
+export interface TestResult {
+  _id: string;
+  journey: string;
+  status: 'success' | 'failure';
+  logs: string;
+  screenshot?: string;
+  createdAt: string;
 }
 
 export interface Journey {
@@ -18,6 +30,7 @@ export interface Journey {
   lastRun?: {
     status: 'success' | 'failure' | 'pending';
     runAt: string;
+    testResult?: TestResult;
   };
   createdAt: string;
   updatedAt: string;
@@ -49,5 +62,10 @@ export const deleteJourney = async (id: string): Promise<void> => {
 
 export const runJourney = async (id: string): Promise<{ message: string }> => {
   const response = await api.post(`/api/journeys/${id}/run`);
+  return response.data;
+};
+
+export const importJourney = async (name: string, code: string): Promise<Journey> => {
+  const response = await api.post('/api/import/journey', { name, code });
   return response.data;
 };

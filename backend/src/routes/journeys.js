@@ -34,7 +34,8 @@ router.get('/', async (req, res) => {
 // GET /journeys/:id - Retrieve a single journey
 router.get('/:id', async (req, res) => {
   try {
-    const journey = await Journey.findOne({ _id: req.params.id, user: req.user.id });
+    const journey = await Journey.findOne({ _id: req.params.id, user: req.user.id })
+      .populate('lastRun.testResult');
     if (!journey) {
       return res.status(404).json({ error: 'Journey not found' });
     }
