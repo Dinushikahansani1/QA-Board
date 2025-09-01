@@ -15,8 +15,9 @@ import {
   CircularProgress,
   Alert,
   Chip,
+  Stack,
 } from '@mui/material';
-import { Add, Edit, Delete, PlayArrow, Visibility } from '@mui/icons-material';
+import { Add, Edit, Delete, PlayArrow, Visibility, FileUpload } from '@mui/icons-material';
 import { getJourneys, deleteJourney, runJourney, type Journey } from '../../api/journeys';
 
 export default function JourneyListPage() {
@@ -56,7 +57,6 @@ export default function JourneyListPage() {
     try {
       await runJourney(id);
       alert('Journey execution started successfully.');
-      // Optionally, refresh the list to show the updated 'lastRun' status
       fetchJourneys();
     } catch (err) {
       setError('Failed to start journey execution.');
@@ -85,18 +85,29 @@ export default function JourneyListPage() {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h4" component="h1">
           Journeys
         </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          component={RouterLink}
-          to="/journeys/new"
-        >
-          Create New Journey
-        </Button>
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="contained"
+            color="secondary"
+            startIcon={<FileUpload />}
+            component={RouterLink}
+            to="/journeys/import"
+          >
+            Import from Code
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            component={RouterLink}
+            to="/journeys/new"
+          >
+            Create Manually
+          </Button>
+        </Stack>
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
