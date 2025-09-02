@@ -1,40 +1,51 @@
 const nodemailer = require('nodemailer');
 const axios = require('axios');
 
-// Create a test account for development
-let testAccount;
-(async () => {
-  testAccount = await nodemailer.createTestAccount();
-})();
+let transporter = null;
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.ethereal.email',
-  port: 587,
-  secure: false, // true for 465, false for other ports
-  auth: {
-    user: testAccount.user, // generated ethereal user
-    pass: testAccount.pass, // generated ethereal password
-  },
-});
-
-async function sendEmail({ to, subject, text, html }) {
-  if (!testAccount) {
-    console.error('Test email account not ready yet.');
-    return;
+async function getTransporter() {
+  if (transporter) {
+    return transporter;
   }
 
   try {
-    const info = await transporter.sendMail({
+    const testAccount = await nodemailer.createTestAccount();
+    transporter = nodemailer.createTransport({
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
+    });
+    console.log('Ethereal email account ready.');
+    return transporter;
+  } catch (error) {
+    console.error('Failed to create test email account:', error);
+    // Return a mock that will fail, so the app doesn't crash on subsequent calls
+    return {
+      sendMail: () => Promise.reject('Transporter initialization failed'),
+    };
+  }
+}
+
+async function sendEmail({ to, subject, text, html }) {
+  try {
+    const emailTransporter = await getTransporter();
+    const info = await emailTransporter.sendMail({
       from: '"MyApp Alerts" <alerts@myapp.com>',
-      to: to.join(','), // list of receivers
+      to: to.join(','),
       subject,
       text,
       html,
     });
 
     console.log('Message sent: %s', info.messageId);
-    // Preview only available when sending through an Ethereal account
-    console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+    const previewUrl = nodemailer.getTestMessageUrl(info);
+    if (previewUrl) {
+      console.log('Preview URL: %s', previewUrl);
+    }
   } catch (error) {
     console.error('Error sending email:', error);
   }
