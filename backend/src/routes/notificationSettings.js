@@ -15,7 +15,7 @@ router.get('/:journeyId', auth, async (req, res) => {
     }
 
     // Ensure the user owns the journey
-    if (journey.user.toString() !== req.user.id) {
+    if (!journey.user.equals(req.user.id)) {
       return res.status(401).json({ msg: 'User not authorized' });
     }
 
