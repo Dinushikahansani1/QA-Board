@@ -69,3 +69,19 @@ export const importJourney = async (name: string, code: string): Promise<Journey
   const response = await api.post('/api/import/journey', { name, code });
   return response.data;
 };
+
+export interface NotificationSettings {
+  failureThreshold: number;
+  emails: string[];
+  slackWebhookUrl: string;
+}
+
+export const getNotificationSettings = async (journeyId: string): Promise<NotificationSettings> => {
+  const response = await api.get(`/api/notification-settings/${journeyId}`);
+  return response.data;
+};
+
+export const updateNotificationSettings = async (journeyId: string, data: NotificationSettings): Promise<NotificationSettings> => {
+  const response = await api.put(`/api/notification-settings/${journeyId}`, data);
+  return response.data;
+};

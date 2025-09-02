@@ -6,6 +6,7 @@ const connectDB = require('./src/config/db');
 const authRoutes = require('./src/routes/auth');
 const journeyRoutes = require('./src/routes/journeys');
 const importRoutes = require('./src/routes/import');
+const notificationSettingsRoutes = require('./src/routes/notificationSettings');
 const scheduler = require('./src/services/scheduler');
 
 const app = express();
@@ -17,11 +18,18 @@ app.get('/', (_req, res) => res.json({ status: 'ok' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/journeys', journeyRoutes);
 app.use('/api/import', importRoutes);
+app.use('/api/notification-settings', notificationSettingsRoutes);
+
+const http = require('http');
+const webSocketService = require('./src/services/websocket');
 
 const PORT = process.env.PORT || 4000;
 
+const server = http.createServer(app);
+webSocketService.init(server);
+
 connectDB().then(() => {
-  app.listen(PORT, () => {
+  server.listen(PORT, () => {
     console.log(`Auth backend listening on :${PORT}`);
     scheduler.start();
   });
