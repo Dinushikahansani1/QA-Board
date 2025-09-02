@@ -11,6 +11,7 @@ import JourneyCreator from './pages/journeys/JourneyCreator';
 import JourneyEditor from './pages/journeys/JourneyEditor';
 import JourneyDetailPage from './pages/journeys/JourneyDetailPage';
 import JourneyImporterPage from './pages/journeys/JourneyImporterPage';
+import NotificationSettingsPage from './pages/journeys/NotificationSettingsPage';
 
 const Protected: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
@@ -67,6 +68,7 @@ function AppInner() {
         <Route path="journeys" element={<JourneyListPage />} />
         <Route path="journeys/new" element={<JourneyCreator />} />
         <Route path="journeys/import" element={<JourneyImporterPage />} />
+        <Route path="journeys/settings/:journeyId" element={<NotificationSettingsPage />} />
         <Route path="journeys/edit/:id" element={<JourneyEditor />} />
         <Route path="journeys/:id" element={<JourneyDetailPage />} />
       </Route>

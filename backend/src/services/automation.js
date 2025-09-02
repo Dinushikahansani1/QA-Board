@@ -1,6 +1,10 @@
 const playwright = require('playwright');
 const Journey = require('../models/Journey');
 const TestResult = require('../models/TestResult');
+const Alert = require('../models/Alert');
+const NotificationSetting = require('../models/NotificationSetting');
+const webSocketService = require('./websocket');
+const notificationService = require('./notification');
 const fs = require('fs');
 const path = require('path');
 
@@ -78,6 +82,56 @@ async function runJourney(journey) {
         testResult: testResult._id,
       },
     });
+
+    if (status === 'failure') {
+      const settings = await NotificationSetting.findOne({ journey: journey._id });
+      const threshold = settings ? settings.failureThreshold : 1;
+
+      const recentFailures = await TestResult.countDocuments({
+        journey: journey._id,
+        status: 'failure',
+        createdAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }, // Check last 24h for relevant failures
+      }).sort({ createdAt: -1 }).limit(threshold);
+
+      if (recentFailures >= threshold) {
+        const newAlert = await Alert.create({
+          journey: journey._id,
+          testResult: testResult._id,
+          user: journey.user,
+        });
+
+        const populatedAlert = await Alert.findById(newAlert._id).populate({
+          path: 'journey',
+          select: 'name'
+        });
+
+        webSocketService.broadcast({
+          type: 'NEW_ALERT',
+          payload: populatedAlert,
+        });
+
+        if (settings) {
+          const alertText = `Alert: Journey "${populatedAlert.journey.name}" failed at ${new Date(populatedAlert.createdAt).toLocaleString()}.`;
+          const alertHtml = `<p><strong>Alert:</strong> Journey "<strong>${populatedAlert.journey.name}</strong>" failed at ${new Date(populatedAlert.createdAt).toLocaleString()}.</p><p>View the full report for more details.</p>`;
+
+          if (settings.emails && settings.emails.length > 0) {
+            notificationService.sendEmail({
+              to: settings.emails,
+              subject: `Alert: ${populatedAlert.journey.name} Failed`,
+              text: alertText,
+              html: alertHtml,
+            });
+          }
+
+          if (settings.slackWebhookUrl) {
+            notificationService.sendSlackNotification({
+              webhookUrl: settings.slackWebhookUrl,
+              text: alertText,
+            });
+          }
+        }
+      }
+    }
   }
 }
 
