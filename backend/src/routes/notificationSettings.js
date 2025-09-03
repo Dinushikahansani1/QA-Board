@@ -49,7 +49,7 @@ router.put('/:journeyId', auth, async (req, res) => {
       return res.status(404).json({ msg: 'Journey not found' });
     }
 
-    if (journey.user.toString() !== req.user.id) {
+    if (!journey.user.equals(req.user.id)) {
       return res.status(401).json({ msg: 'User not authorized' });
     }
 
