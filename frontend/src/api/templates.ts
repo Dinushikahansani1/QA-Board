@@ -7,6 +7,6 @@ export interface Template {
 }
 
 export const getTemplates = async (): Promise<Template[]> => {
-  const response = await axios.get('/templates');
+  const response = await axios.get('/api/templates');
   return response.data;
 };
