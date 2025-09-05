@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Box, Typography, Paper, Alert } from '@mui/material';
 import JourneyForm from './JourneyForm';
 import { createJourney, type JourneyStep } from '../../api/journeys';
-import { Template } from '../../api/templates';
+import type { Template } from '../../api/templates';
 
 export default function JourneyCreator() {
   const navigate = useNavigate();
