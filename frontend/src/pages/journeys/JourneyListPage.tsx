@@ -22,6 +22,7 @@ import { Add, Edit, Delete, PlayArrow, Visibility, FileUpload, Settings } from '
 import { getJourneys, deleteJourney, runJourney, type Journey } from '../../api/journeys';
 import LiveAlerts from '../../components/LiveAlerts';
 import AlertBanner from '../../components/AlertBanner';
+import JourneyTemplates from '../../components/JourneyTemplates';
 
 export default function JourneyListPage() {
   const [journeys, setJourneys] = useState<Journey[]>([]);
@@ -171,6 +172,7 @@ export default function JourneyListPage() {
           <Paper sx={{ p: 2 }}>
             <LiveAlerts />
           </Paper>
+          <JourneyTemplates />
         </Grid>
       </Grid>
     </Box>
