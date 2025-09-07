@@ -65,6 +65,11 @@ export const runJourney = async (id: string): Promise<{ message: string }> => {
   return response.data;
 };
 
+export const generateJourneyFromText = async (text: string): Promise<{ name: string; steps: JourneyStep[] }> => {
+  const response = await api.post('/api/journeys/generate-from-text', { text });
+  return response.data;
+};
+
 export const importJourney = async (name: string, code: string): Promise<Journey> => {
   const response = await api.post('/api/import/journey', { name, code });
   return response.data;

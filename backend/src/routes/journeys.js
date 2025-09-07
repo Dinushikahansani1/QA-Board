@@ -2,9 +2,24 @@ const router = require('express').Router();
 const Journey = require('../models/Journey');
 const authMiddleware = require('../middleware/auth');
 const { runJourney } = require('../services/automation');
+const { generateJourneyFromText } = require('../services/llm');
 
 // Use auth middleware for all journey routes
 router.use(authMiddleware);
+
+// POST /journeys/generate-from-text - Generate journey steps from natural language
+router.post('/generate-from-text', async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) {
+      return res.status(400).json({ error: 'Text input is required.' });
+    }
+    const journeyData = await generateJourneyFromText(text);
+    res.json(journeyData);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to generate journey from text.' });
+  }
+});
 
 // POST /journeys - Create a new journey
 router.post('/', async (req, res) => {
