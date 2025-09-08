@@ -106,6 +106,15 @@ export default function JourneyListPage() {
           </Button>
           <Button
             variant="contained"
+            color="secondary"
+            startIcon={<Add />}
+            component={RouterLink}
+            to="/journeys/templates"
+          >
+            Create from Template
+          </Button>
+          <Button
+            variant="contained"
             startIcon={<Add />}
             component={RouterLink}
             to="/journeys/new"
