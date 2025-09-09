@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
+  Menu,
   TextField,
   Typography,
   Paper,
@@ -11,9 +12,11 @@ import {
   FormControl,
   InputLabel,
   Grid,
+  InputAdornment,
 } from '@mui/material';
-import { AddCircle, Delete } from '@mui/icons-material';
+import { AddCircle, Delete, VpnKey } from '@mui/icons-material';
 import type { JourneyStep } from '../../api/journeys';
+import { getSecrets, type Secret } from '../../api/secrets';
 
 interface JourneyFormProps {
   onSubmit: (data: { name: string; steps: JourneyStep[] }) => void;
@@ -33,6 +36,12 @@ export default function JourneyForm({
 }: JourneyFormProps) {
   const [name, setName] = useState(initialData.name);
   const [steps, setSteps] = useState<JourneyStep[]>(initialData.steps);
+  const [secrets, setSecrets] = useState<Secret[]>([]);
+
+  useEffect(() => {
+    // Fetch available secrets when the component mounts
+    getSecrets().then(setSecrets).catch(err => console.error("Failed to fetch secrets", err));
+  }, []);
 
   const handleStepChange = (index: number, field: keyof JourneyStep | keyof JourneyStep['params'], value: any) => {
     const newSteps = [...steps];
@@ -59,6 +68,44 @@ export default function JourneyForm({
     onSubmit({ name, steps });
   };
 
+  // A helper component to select a secret
+  const SecretSelector = ({ onSelect }: { onSelect: (name: string) => void }) => {
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const open = Boolean(anchorEl);
+
+    const handleClick = (event: React.MouseEvent<HTMLElement>) => {
+      setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+      setAnchorEl(null);
+    };
+
+    const handleSelect = (secretName: string) => {
+      onSelect(`{{secrets.${secretName}}}`);
+      handleClose();
+    };
+
+    return (
+      <>
+        <IconButton onClick={handleClick} size="small" title="Insert Secret">
+          <VpnKey />
+        </IconButton>
+        <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
+          {secrets.length === 0 ? (
+            <MenuItem disabled>No secrets found</MenuItem>
+          ) : (
+            secrets.map((secret) => (
+              <MenuItem key={secret._id} onClick={() => handleSelect(secret.name)}>
+                {secret.name}
+              </MenuItem>
+            ))
+          )}
+        </Menu>
+      </>
+    );
+  };
+
   const renderStepParams = (step: JourneyStep, index: number) => {
     switch (step.action) {
       case 'goto':
@@ -69,6 +116,13 @@ export default function JourneyForm({
             onChange={(e) => handleStepChange(index, 'url', e.target.value)}
             fullWidth
             required
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <SecretSelector onSelect={(val) => handleStepChange(index, 'url', val)} />
+                </InputAdornment>
+              ),
+            }}
           />
         );
       case 'click':
@@ -101,6 +155,13 @@ export default function JourneyForm({
                 onChange={(e) => handleStepChange(index, 'text', e.target.value)}
                 fullWidth
                 required
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <SecretSelector onSelect={(val) => handleStepChange(index, 'text', val)} />
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Grid>
           </>

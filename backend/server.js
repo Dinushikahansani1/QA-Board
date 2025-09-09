@@ -8,6 +8,7 @@ const journeyRoutes = require('./src/routes/journeys');
 const importRoutes = require('./src/routes/import');
 const notificationSettingsRoutes = require('./src/routes/notificationSettings');
 const templateRoutes = require('./src/routes/templates');
+const secretRoutes = require('./src/routes/secrets');
 const scheduler = require('./src/services/scheduler');
 
 const app = express();
@@ -38,6 +39,7 @@ app.use('/api/journeys', journeyRoutes);
 app.use('/api/import', importRoutes);
 app.use('/api/notification-settings', notificationSettingsRoutes);
 app.use('/api/templates', templateRoutes);
+app.use('/api/secrets', secretRoutes);
 
 const http = require('http');
 const webSocketService = require('./src/services/websocket');

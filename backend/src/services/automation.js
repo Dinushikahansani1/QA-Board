@@ -1,5 +1,7 @@
 const playwright = require('playwright');
 const Journey = require('../models/Journey');
+const Secret = require('../models/Secret');
+const { decrypt } = require('./encryption');
 const TestResult = require('../models/TestResult');
 const Alert = require('../models/Alert');
 const NotificationSetting = require('../models/NotificationSetting');
@@ -22,8 +24,34 @@ async function runJourney(journey) {
   // let screenshotPath; 
 
   try {
+    // 1. Fetch and decrypt secrets for the user
+    const userSecrets = await Secret.find({ user: journey.user });
+    const secretMap = new Map();
+    for (const secret of userSecrets) {
+      secretMap.set(secret.name, decrypt(secret.value));
+    }
+
+    // 2. Create a substitution function
+    const substituteSecrets = (text) => {
+      if (typeof text !== 'string') return text;
+      return text.replace(/{{secrets\.([a-zA-Z0-9_]+)}}/g, (match, secretName) => {
+        if (secretMap.has(secretName)) {
+          return secretMap.get(secretName);
+        }
+        // If secret not found, return the placeholder to make it obvious in logs
+        logs.push(`Warning: Secret "${secretName}" not found in vault.`);
+        return match;
+      });
+    };
+
     for (const step of journey.steps) {
-      logs.push(`Executing action: ${step.action} with params: ${JSON.stringify(step.params)}`);
+      // 3. Substitute secrets in params before execution
+      const processedParams = {};
+      for (const key in step.params) {
+        processedParams[key] = substituteSecrets(step.params[key]);
+      }
+
+      logs.push(`Executing action: ${step.action} with params: ${JSON.stringify(processedParams)}`);
 
       // Helper function to get a locator object safely from either a string or our structured object
       const getLocator = (selector) => {
@@ -41,19 +69,19 @@ async function runJourney(journey) {
 
       switch (step.action) {
         case 'goto':
-          await page.goto(step.params.url);
+          await page.goto(processedParams.url);
           break;
         case 'click':
-          const clickLocator = getLocator(step.params.selector);
+          const clickLocator = getLocator(processedParams.selector);
           await clickLocator.click();
           break;
         case 'type':
-          const typeLocator = getLocator(step.params.selector);
-          await typeLocator.fill(step.params.text); // Using fill is more robust for locators
+          const typeLocator = getLocator(processedParams.selector);
+          await typeLocator.fill(processedParams.text); // Using fill is more robust for locators
           break;
         case 'waitForSelector':
           // This action is more for manual creation, recorded journeys will have better waits.
-          await page.waitForSelector(step.params.selector);
+          await page.waitForSelector(processedParams.selector);
           break;
         default:
           throw new Error(`Unsupported action: ${step.action}`);
