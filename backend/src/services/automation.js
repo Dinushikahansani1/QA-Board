@@ -8,10 +8,10 @@ const notificationService = require('./notification');
 const fs = require('fs');
 const path = require('path');
 
-const screenshotsDir = path.join(__dirname, '..', '..', 'screenshots');
-if (!fs.existsSync(screenshotsDir)) {
-  fs.mkdirSync(screenshotsDir, { recursive: true });
-}
+// const screenshotsDir = path.join(__dirname, '..', '..', 'screenshots');
+// if (!fs.existsSync(screenshotsDir)) {
+//   fs.mkdirSync(screenshotsDir, { recursive: true });
+// }
 
 async function runJourney(journey) {
   const browser = await playwright.chromium.launch();
@@ -19,7 +19,7 @@ async function runJourney(journey) {
   const page = await context.newPage();
   const logs = [];
   let status = 'success';
-  let screenshotPath;
+  // let screenshotPath; 
 
   try {
     for (const step of journey.steps) {
@@ -62,9 +62,10 @@ async function runJourney(journey) {
   } catch (error) {
     status = 'failure';
     logs.push(`Error: ${error.message}`);
-    const screenshotFileName = `${journey._id}-${Date.now()}.png`;
-    screenshotPath = path.join(screenshotsDir, screenshotFileName);
-    await page.screenshot({ path: screenshotPath });
+    // Screenshot functionality commented out for now
+    // const screenshotFileName = `${journey._id}-${Date.now()}.png`;
+    // screenshotPath = path.join(screenshotsDir, screenshotFileName);
+    // await page.screenshot({ path: screenshotPath });
   } finally {
     await browser.close();
 
@@ -72,7 +73,8 @@ async function runJourney(journey) {
       journey: journey._id,
       status,
       logs: logs.join('\n'),
-      screenshot: screenshotPath,
+      // screenshot: screenshotPath, // Commented out since we're not taking screenshots
+      screenshot: null, // Explicitly set to null
     });
 
     await Journey.findByIdAndUpdate(journey._id, {
