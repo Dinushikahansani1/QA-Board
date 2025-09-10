@@ -117,8 +117,11 @@ export default function SecretsPage() {
                 required
                 sx={{ mb: 2 }}
               />
-              <Button type="submit" variant="contained" disabled={isSubmitting}>
+              <Button type="submit" variant="contained" disabled={isSubmitting} sx={{ mr: 2 }}>
                 {isSubmitting ? <CircularProgress size={24} /> : 'Create Secret'}
+              </Button>
+              <Button variant="outlined" onClick={() => { setNewName(''); setNewValue(''); setError(null); }}>
+                Clear
               </Button>
             </Box>
           </Paper>

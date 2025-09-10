@@ -85,9 +85,14 @@ const NotificationSettingsPage = () => {
               fullWidth
               margin="normal"
             />
-            <Button type="submit" variant="contained" sx={{ mt: 2 }}>
-              Save Settings
-            </Button>
+            <Box sx={{ mt: 2 }}>
+              <Button type="submit" variant="contained" sx={{ mr: 2 }}>
+                Save Settings
+              </Button>
+              <Button variant="outlined" onClick={() => navigate('/journeys')}>
+                Cancel
+              </Button>
+            </Box>
           </form>
         </Paper>
       )}

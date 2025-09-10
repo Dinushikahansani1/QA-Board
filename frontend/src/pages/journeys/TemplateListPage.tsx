@@ -54,9 +54,14 @@ export default function TemplateListPage() {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" component="h1" gutterBottom>
-        Create from a Template
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h4" component="h1">
+          Create from a Template
+        </Typography>
+        <Button variant="outlined" onClick={() => navigate('/journeys')}>
+          Back to Journeys
+        </Button>
+      </Box>
       <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>
         Select one of our pre-built journeys to get started quickly.
       </Typography>
