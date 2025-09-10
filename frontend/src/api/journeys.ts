@@ -25,6 +25,7 @@ export interface TestResult {
 export interface Journey {
   _id: string;
   name: string;
+  domain: string;
   steps: JourneyStep[];
   user: string;
   lastRun?: {
@@ -46,12 +47,12 @@ export const getJourney = async (id: string): Promise<Journey> => {
   return response.data;
 };
 
-export const createJourney = async (data: { name: string; steps: JourneyStep[] }): Promise<Journey> => {
+export const createJourney = async (data: { name: string; domain: string; steps: JourneyStep[] }): Promise<Journey> => {
   const response = await api.post('/api/journeys', data);
   return response.data;
 };
 
-export const updateJourney = async (id: string, data: { name: string; steps: JourneyStep[] }): Promise<Journey> => {
+export const updateJourney = async (id: string, data: { name: string; domain: string; steps: JourneyStep[] }): Promise<Journey> => {
   const response = await api.put(`/api/journeys/${id}`, data);
   return response.data;
 };

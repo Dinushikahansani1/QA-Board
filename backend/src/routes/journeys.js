@@ -24,9 +24,10 @@ router.post('/generate-from-text', async (req, res) => {
 // POST /journeys - Create a new journey
 router.post('/', async (req, res) => {
   try {
-    const { name, steps } = req.body;
+    const { name, domain, steps } = req.body;
     const journey = await Journey.create({
       name,
+      domain,
       steps,
       user: req.user.id
     });
@@ -39,7 +40,8 @@ router.post('/', async (req, res) => {
 // GET /journeys - Retrieve all journeys for the logged-in user
 router.get('/', async (req, res) => {
   try {
-    const journeys = await Journey.find({ user: req.user.id });
+    const query = req.user.role === 'admin' ? {} : { user: req.user.id };
+    const journeys = await Journey.find(query);
     res.json(journeys);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -63,10 +65,10 @@ router.get('/:id', async (req, res) => {
 // PUT /journeys/:id - Update a journey
 router.put('/:id', async (req, res) => {
   try {
-    const { name, steps } = req.body;
+    const { name, domain, steps } = req.body;
     const journey = await Journey.findOneAndUpdate(
       { _id: req.params.id, user: req.user.id },
-      { name, steps },
+      { name, domain, steps },
       { new: true }
     );
     if (!journey) {
