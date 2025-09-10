@@ -89,7 +89,7 @@ export default function SecretsPage() {
         Secrets Vault
       </Typography>
       <Typography color="text.secondary" sx={{ mb: 3 }}>
-        Manage your secrets here. These can be used in your journeys with the syntax `{{secrets.SECRET_NAME}}`. The values are encrypted and never shown again after creation.
+       {"Manage your secrets here. These can be used in your journeys with the syntax '{{secrets.SECRET_NAME}}'. The values are encrypted and never shown again after creation."}
       </Typography>
 
       <Grid container spacing={4}>
