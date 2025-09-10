@@ -42,7 +42,7 @@ export default function JourneyCreator() {
     ? transformTemplateData(rawData)
     : rawData;
 
-  const handleSubmit = async (data: { name: string; steps: JourneyStep[] }) => {
+  const handleSubmit = async (data: { name: string; domain: string; steps: JourneyStep[] }) => {
     try {
       await createJourney(data);
       navigate('/journeys');

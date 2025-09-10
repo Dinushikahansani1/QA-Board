@@ -34,7 +34,8 @@ async function runJourney(journey) {
     // 2. Create a substitution function
     const substituteSecrets = (text) => {
       if (typeof text !== 'string') return text;
-      return text.replace(/{{secrets\.([a-zA-Z0-9_]+)}}/g, (match, secretName) => {
+      // Regex updated to handle optional whitespace around the secret name
+      return text.replace(/{{secrets\.\s*([a-zA-Z0-9_]+)\s*}}/g, (match, secretName) => {
         if (secretMap.has(secretName)) {
           return secretMap.get(secretName);
         }
