@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const JourneySchema = new mongoose.Schema({
   name: { type: String, required: true },
+  domain: { type: String, required: true, trim: true, index: true },
   steps: { type: Array, required: true },
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   lastRun: {

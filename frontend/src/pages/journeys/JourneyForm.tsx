@@ -19,8 +19,8 @@ import type { JourneyStep } from '../../api/journeys';
 import { getSecrets, type Secret } from '../../api/secrets';
 
 interface JourneyFormProps {
-  onSubmit: (data: { name: string; steps: JourneyStep[] }) => void;
-  initialData?: { name: string; steps: JourneyStep[] };
+  onSubmit: (data: { name: string; domain: string; steps: JourneyStep[] }) => void;
+  initialData?: { name: string; domain: string; steps: JourneyStep[] };
   submitButtonText?: string;
 }
 
@@ -31,10 +31,11 @@ const defaultStep: JourneyStep = {
 
 export default function JourneyForm({
   onSubmit,
-  initialData = { name: '', steps: [defaultStep] },
+  initialData = { name: '', domain: '', steps: [defaultStep] },
   submitButtonText = 'Create Journey',
 }: JourneyFormProps) {
   const [name, setName] = useState(initialData.name);
+  const [domain, setDomain] = useState(initialData.domain);
   const [steps, setSteps] = useState<JourneyStep[]>(initialData.steps);
   const [secrets, setSecrets] = useState<Secret[]>([]);
 
@@ -65,7 +66,7 @@ export default function JourneyForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ name, steps });
+    onSubmit({ name, domain, steps });
   };
 
   // A helper component to select a secret
@@ -173,14 +174,26 @@ export default function JourneyForm({
 
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
-      <TextField
-        label="Journey Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        fullWidth
-        required
-        sx={{ mb: 3 }}
-      />
+      <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            label="Journey Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            fullWidth
+            required
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            label="Target Domain (e.g., example.com)"
+            value={domain}
+            onChange={(e) => setDomain(e.target.value)}
+            fullWidth
+            required
+          />
+        </Grid>
+      </Grid>
 
       <Typography variant="h6" sx={{ mb: 1 }}>Steps</Typography>
 

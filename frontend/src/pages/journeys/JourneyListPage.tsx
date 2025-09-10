@@ -24,8 +24,12 @@ import LiveAlerts from '../../components/LiveAlerts';
 import AlertBanner from '../../components/AlertBanner';
 import NaturalLanguageCreator from '../../components/NaturalLanguageCreator';
 
+interface GroupedJourneys {
+  [domain: string]: Journey[];
+}
+
 export default function JourneyListPage() {
-  const [journeys, setJourneys] = useState<Journey[]>([]);
+  const [groupedJourneys, setGroupedJourneys] = useState<GroupedJourneys>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +37,15 @@ export default function JourneyListPage() {
     try {
       setLoading(true);
       const data = await getJourneys();
-      setJourneys(data);
+      const grouped = data.reduce((acc: GroupedJourneys, journey: Journey) => {
+        const domain = journey.domain || 'Uncategorized';
+        if (!acc[domain]) {
+          acc[domain] = [];
+        }
+        acc[domain].push(journey);
+        return acc;
+      }, {});
+      setGroupedJourneys(grouped);
     } catch (err) {
       setError('Failed to fetch journeys. Please try again later.');
       console.error(err);
@@ -50,7 +62,8 @@ export default function JourneyListPage() {
     if (window.confirm('Are you sure you want to delete this journey?')) {
       try {
         await deleteJourney(id);
-        setJourneys(journeys.filter((j) => j._id !== id));
+        // Refetch to rebuild the groups correctly
+        fetchJourneys();
       } catch (err) {
         setError('Failed to delete journey.');
       }
@@ -128,54 +141,59 @@ export default function JourneyListPage() {
 
       <Grid container spacing={3}>
         <Grid item xs={12} md={8}>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Last Run Status</TableCell>
-                  <TableCell>Last Run At</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {journeys.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} align="center">
-                      No journeys found. Create one to get started!
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  journeys.map((journey) => (
-                    <TableRow key={journey._id}>
-                      <TableCell>{journey.name}</TableCell>
-                      <TableCell>{getStatusChip(journey.lastRun?.status)}</TableCell>
-                      <TableCell>
-                        {journey.lastRun?.runAt ? new Date(journey.lastRun.runAt).toLocaleString() : 'N/A'}
-                      </TableCell>
-                      <TableCell>
-                        <IconButton component={RouterLink} to={`/journeys/${journey._id}`} title="View Details">
-                          <Visibility />
-                        </IconButton>
-                        <IconButton component={RouterLink} to={`/journeys/edit/${journey._id}`} title="Edit">
-                          <Edit />
-                        </IconButton>
-                        <IconButton onClick={() => handleRun(journey._id)} title="Run Journey">
-                          <PlayArrow />
-                        </IconButton>
-                    <IconButton component={RouterLink} to={`/journeys/settings/${journey._id}`} title="Notification Settings">
-                      <Settings />
-                    </IconButton>
-                        <IconButton onClick={() => handleDelete(journey._id)} title="Delete">
-                          <Delete />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          {Object.keys(groupedJourneys).length === 0 ? (
+            <Paper sx={{ p: 3, textAlign: 'center' }}>
+              <Typography>No journeys found. Create one to get started!</Typography>
+            </Paper>
+          ) : (
+            Object.entries(groupedJourneys).map(([domain, journeys]) => (
+              <Box key={domain} sx={{ mb: 4 }}>
+                <Typography variant="h5" component="h2" gutterBottom>
+                  {domain}
+                </Typography>
+                <TableContainer component={Paper}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Last Run Status</TableCell>
+                        <TableCell>Last Run At</TableCell>
+                        <TableCell>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {journeys.map((journey) => (
+                        <TableRow key={journey._id}>
+                          <TableCell>{journey.name}</TableCell>
+                          <TableCell>{getStatusChip(journey.lastRun?.status)}</TableCell>
+                          <TableCell>
+                            {journey.lastRun?.runAt ? new Date(journey.lastRun.runAt).toLocaleString() : 'N/A'}
+                          </TableCell>
+                          <TableCell>
+                            <IconButton component={RouterLink} to={`/journeys/${journey._id}`} title="View Details">
+                              <Visibility />
+                            </IconButton>
+                            <IconButton component={RouterLink} to={`/journeys/edit/${journey._id}`} title="Edit">
+                              <Edit />
+                            </IconButton>
+                            <IconButton onClick={() => handleRun(journey._id)} title="Run Journey">
+                              <PlayArrow />
+                            </IconButton>
+                            <IconButton component={RouterLink} to={`/journeys/settings/${journey._id}`} title="Notification Settings">
+                              <Settings />
+                            </IconButton>
+                            <IconButton onClick={() => handleDelete(journey._id)} title="Delete">
+                              <Delete />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            ))
+          )}
         </Grid>
         <Grid item xs={12} md={4}>
           <Paper sx={{ p: 2 }}>
