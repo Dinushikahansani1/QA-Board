@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Button,
@@ -34,6 +35,7 @@ export default function JourneyForm({
   initialData = { name: '', domain: '', steps: [defaultStep] },
   submitButtonText = 'Create Journey',
 }: JourneyFormProps) {
+  const navigate = useNavigate();
   const [name, setName] = useState(initialData.name);
   const [domain, setDomain] = useState(initialData.domain);
   const [steps, setSteps] = useState<JourneyStep[]>(initialData.steps);
@@ -238,8 +240,11 @@ export default function JourneyForm({
         Add Step
       </Button>
 
-      <Button type="submit" variant="contained">
+      <Button type="submit" variant="contained" sx={{ mr: 2 }}>
         {submitButtonText}
+      </Button>
+      <Button variant="outlined" onClick={() => navigate('/journeys')}>
+        Cancel
       </Button>
     </Box>
   );
