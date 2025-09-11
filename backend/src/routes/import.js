@@ -30,7 +30,6 @@ router.post('/journey', async (req, res) => {
       name,
       domain,
       steps,
-      code,
       user: req.user.id,
     });
 
