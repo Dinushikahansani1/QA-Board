@@ -99,6 +99,12 @@ async function runJourney(journey) {
             await getAssertion(locator, processedParams.not).toHaveText(processedParams.text);
           }
           break;
+        case 'toContainText':
+            {
+              const locator = getLocator(processedParams.selector);
+              await getAssertion(locator, processedParams.not).toContainText(processedParams.text);
+            }
+            break;
         case 'toBeVisible':
           {
             const locator = getLocator(processedParams.selector);
