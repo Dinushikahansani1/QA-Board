@@ -1,8 +1,0 @@
-{
-  "dependencies": {
-    "@babel/parser": "^7.28.3",
-    "@babel/traverse": "^7.28.3",
-    "nodemailer": "^7.0.6",
-    "openai": "^5.19.1"
-  }
-}

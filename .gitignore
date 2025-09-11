@@ -31,3 +31,9 @@ frontend/.env
 
 # Coverage / testing
 coverage/
+
+# .gitignore (add these lines)
+backend/screenshots/
+backend/temp_journeys/
+playwright-report/
+test-results/
