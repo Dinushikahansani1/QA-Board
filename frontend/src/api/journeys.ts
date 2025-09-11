@@ -5,11 +5,18 @@ import api from './axios';
 type Selector = string | { method: string; args: any[] };
 
 export interface JourneyStep {
-  action: 'goto' | 'click' | 'type' | 'waitForSelector';
+  action: 'goto' | 'click' | 'type' | 'waitForSelector' | 'expect';
   params: {
+    // For actions
     selector?: Selector;
     url?: string;
     text?: string;
+    // For assertions
+    target?: 'locator' | 'page';
+    assertion?: string;
+    value?: any;
+    options?: { timeout?: number };
+    soft?: boolean;
   };
 }
 
@@ -25,7 +32,6 @@ export interface TestResult {
 export interface Journey {
   _id: string;
   name: string;
-  domain: string;
   steps: JourneyStep[];
   user: string;
   lastRun?: {
@@ -47,12 +53,12 @@ export const getJourney = async (id: string): Promise<Journey> => {
   return response.data;
 };
 
-export const createJourney = async (data: { name: string; domain: string; steps: JourneyStep[] }): Promise<Journey> => {
+export const createJourney = async (data: { name: string; steps: JourneyStep[] }): Promise<Journey> => {
   const response = await api.post('/api/journeys', data);
   return response.data;
 };
 
-export const updateJourney = async (id: string, data: { name: string; domain: string; steps: JourneyStep[] }): Promise<Journey> => {
+export const updateJourney = async (id: string, data: { name: string; steps: JourneyStep[] }): Promise<Journey> => {
   const response = await api.put(`/api/journeys/${id}`, data);
   return response.data;
 };
@@ -63,11 +69,6 @@ export const deleteJourney = async (id: string): Promise<void> => {
 
 export const runJourney = async (id: string): Promise<{ message: string }> => {
   const response = await api.post(`/api/journeys/${id}/run`);
-  return response.data;
-};
-
-export const generateJourneyFromText = async (text: string): Promise<{ name: string; steps: JourneyStep[] }> => {
-  const response = await api.post('/api/journeys/generate-from-text', { text });
   return response.data;
 };
 

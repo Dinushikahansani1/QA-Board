@@ -1,6 +1,4 @@
 const router = require('express').Router();
-const fs = require('fs').promises;
-const path = require('path');
 const Journey = require('../models/Journey');
 const { parsePlaywrightCode } = require('../services/parser');
 const authMiddleware = require('../middleware/auth');
@@ -13,14 +11,8 @@ router.post('/journey', async (req, res) => {
     return res.status(400).json({ error: 'Journey name and code are required.' });
   }
 
-  const tempDir = path.join(__dirname, '..', '..', 'temp_journeys');
-  await fs.mkdir(tempDir, { recursive: true });
-  const tempFile = path.join(tempDir, `import-${Date.now()}.js`);
-
   try {
-    await fs.writeFile(tempFile, code);
-
-    const steps = await parsePlaywrightCode(tempFile);
+    const steps = await parsePlaywrightCode(code);
 
     if (steps.length === 0) {
       return res.status(400).json({ error: 'Could not parse any actionable steps from the code provided.' });
@@ -36,12 +28,6 @@ router.post('/journey', async (req, res) => {
   } catch (error) {
     console.error('Error during import process:', error);
     res.status(500).json({ error: 'An error occurred during the import process.' });
-  } finally {
-    try {
-      await fs.unlink(tempFile);
-    } catch (err) {
-      // Ignore
-    }
   }
 });
 

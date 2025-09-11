@@ -1,7 +1,5 @@
-const playwright = require('playwright');
+const { chromium, expect } = require('@playwright/test');
 const Journey = require('../models/Journey');
-const Secret = require('../models/Secret');
-const { decrypt } = require('./encryption');
 const TestResult = require('../models/TestResult');
 const Alert = require('../models/Alert');
 const NotificationSetting = require('../models/NotificationSetting');
@@ -10,13 +8,16 @@ const notificationService = require('./notification');
 const fs = require('fs');
 const path = require('path');
 
+// NOTE: Secrets are not yet implemented in this focused feature.
+// This will need to be re-introduced when the secrets vault is built.
+
 const screenshotsDir = path.join(__dirname, '..', '..', 'screenshots');
 if (!fs.existsSync(screenshotsDir)) {
   fs.mkdirSync(screenshotsDir, { recursive: true });
 }
 
 async function runJourney(journey) {
-  const browser = await playwright.chromium.launch();
+  const browser = await chromium.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
   const logs = [];
@@ -24,35 +25,8 @@ async function runJourney(journey) {
   let screenshotPath;
 
   try {
-    // 1. Fetch and decrypt secrets for the user
-    const userSecrets = await Secret.find({ user: journey.user });
-    const secretMap = new Map();
-    for (const secret of userSecrets) {
-      secretMap.set(secret.name, decrypt(secret.value));
-    }
-
-    // 2. Create a substitution function
-    const substituteSecrets = (text) => {
-      if (typeof text !== 'string') return text;
-      // Regex updated to handle optional whitespace around the secret name
-      return text.replace(/{{secrets\.\s*([a-zA-Z0-9_]+)\s*}}/g, (match, secretName) => {
-        if (secretMap.has(secretName)) {
-          return secretMap.get(secretName);
-        }
-        // If secret not found, return the placeholder to make it obvious in logs
-        logs.push(`Warning: Secret "${secretName}" not found in vault.`);
-        return match;
-      });
-    };
-
     for (const step of journey.steps) {
-      // 3. Substitute secrets in params before execution
-      const processedParams = {};
-      for (const key in step.params) {
-        processedParams[key] = substituteSecrets(step.params[key]);
-      }
-
-      logs.push(`Executing action: ${step.action} with params: ${JSON.stringify(processedParams)}`);
+      logs.push(`Executing action: ${step.action} with params: ${JSON.stringify(step.params)}`);
 
       // Helper function to get a locator object safely from either a string or our structured object
       const getLocator = (selector) => {
@@ -70,19 +44,49 @@ async function runJourney(journey) {
 
       switch (step.action) {
         case 'goto':
-          await page.goto(processedParams.url);
+          await page.goto(step.params.url);
           break;
         case 'click':
-          const clickLocator = getLocator(processedParams.selector);
+          const clickLocator = getLocator(step.params.selector);
           await clickLocator.click();
           break;
         case 'type':
-          const typeLocator = getLocator(processedParams.selector);
-          await typeLocator.fill(processedParams.text); // Using fill is more robust for locators
+          const typeLocator = getLocator(step.params.selector);
+          await typeLocator.fill(step.params.text); // Using fill is more robust for locators
           break;
         case 'waitForSelector':
-          // This action is more for manual creation, recorded journeys will have better waits.
-          await page.waitForSelector(processedParams.selector);
+          await page.waitForSelector(step.params.selector);
+          break;
+        case 'expect':
+          const { target, selector, assertion, value, options, soft } = step.params;
+          const expectFn = soft ? expect.soft : expect;
+          let expectTarget;
+
+          if (target === 'page') {
+            expectTarget = expectFn(page);
+          } else {
+            const locator = getLocator(selector);
+            expectTarget = expectFn(locator);
+          }
+
+          // Handle negation by splitting assertion string. e.g., "not.toBeVisible"
+          const assertionParts = assertion.split('.');
+          if (assertionParts[0] === 'not') {
+            expectTarget = expectTarget.not;
+            assertionParts.shift();
+          }
+          const finalAssertion = assertionParts.join('.');
+
+
+          if (typeof expectTarget[finalAssertion] !== 'function') {
+            throw new Error(`Unsupported assertion: ${finalAssertion}`);
+          }
+
+          if (value !== undefined && value !== null) {
+            await expectTarget[finalAssertion](value, options);
+          } else {
+            await expectTarget[finalAssertion](options);
+          }
           break;
         default:
           throw new Error(`Unsupported action: ${step.action}`);

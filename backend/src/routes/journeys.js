@@ -2,32 +2,16 @@ const router = require('express').Router();
 const Journey = require('../models/Journey');
 const authMiddleware = require('../middleware/auth');
 const { runJourney } = require('../services/automation');
-const { generateJourneyFromText } = require('../services/llm');
 
 // Use auth middleware for all journey routes
 router.use(authMiddleware);
 
-// POST /journeys/generate-from-text - Generate journey steps from natural language
-router.post('/generate-from-text', async (req, res) => {
-  try {
-    const { text } = req.body;
-    if (!text) {
-      return res.status(400).json({ error: 'Text input is required.' });
-    }
-    const journeyData = await generateJourneyFromText(text);
-    res.json(journeyData);
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to generate journey from text.' });
-  }
-});
-
 // POST /journeys - Create a new journey
 router.post('/', async (req, res) => {
   try {
-    const { name, domain, steps } = req.body;
+    const { name, steps } = req.body;
     const journey = await Journey.create({
       name,
-      domain,
       steps,
       user: req.user.id
     });
@@ -40,8 +24,7 @@ router.post('/', async (req, res) => {
 // GET /journeys - Retrieve all journeys for the logged-in user
 router.get('/', async (req, res) => {
   try {
-    const query = req.user.role === 'admin' ? {} : { user: req.user.id };
-    const journeys = await Journey.find(query);
+    const journeys = await Journey.find({ user: req.user.id });
     res.json(journeys);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -65,10 +48,10 @@ router.get('/:id', async (req, res) => {
 // PUT /journeys/:id - Update a journey
 router.put('/:id', async (req, res) => {
   try {
-    const { name, domain, steps } = req.body;
+    const { name, steps } = req.body;
     const journey = await Journey.findOneAndUpdate(
       { _id: req.params.id, user: req.user.id },
-      { name, domain, steps },
+      { name, steps },
       { new: true }
     );
     if (!journey) {

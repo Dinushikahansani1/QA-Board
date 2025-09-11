@@ -12,8 +12,6 @@ import JourneyEditor from './pages/journeys/JourneyEditor';
 import JourneyDetailPage from './pages/journeys/JourneyDetailPage';
 import JourneyImporterPage from './pages/journeys/JourneyImporterPage';
 import NotificationSettingsPage from './pages/journeys/NotificationSettingsPage';
-import TemplateListPage from './pages/journeys/TemplateListPage';
-import SecretsPage from './pages/SecretsPage';
 
 const Protected: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
@@ -33,7 +31,6 @@ function Layout() {
                     </Typography>
                     <Button color="inherit" component={Link} to="/">Dashboard</Button>
                     <Button color="inherit" component={Link} to="/journeys">Journeys</Button>
-                    <Button color="inherit" component={Link} to="/secrets">Secrets</Button>
                     <Button color="inherit" onClick={logout}>Logout ({user?.email})</Button>
                 </Toolbar>
             </AppBar>
@@ -70,12 +67,10 @@ function AppInner() {
         <Route index element={<Dashboard />} />
         <Route path="journeys" element={<JourneyListPage />} />
         <Route path="journeys/new" element={<JourneyCreator />} />
-        <Route path="journeys/templates" element={<TemplateListPage />} />
         <Route path="journeys/import" element={<JourneyImporterPage />} />
         <Route path="journeys/settings/:journeyId" element={<NotificationSettingsPage />} />
         <Route path="journeys/edit/:id" element={<JourneyEditor />} />
         <Route path="journeys/:id" element={<JourneyDetailPage />} />
-        <Route path="secrets" element={<SecretsPage />} />
       </Route>
     </Routes>
   );

@@ -14,14 +14,18 @@ import {
   InputLabel,
   Grid,
   InputAdornment,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material';
 import { AddCircle, Delete, VpnKey } from '@mui/icons-material';
 import type { JourneyStep } from '../../api/journeys';
-import { getSecrets, type Secret } from '../../api/secrets';
+
+// NOTE: Secrets are not yet implemented in this focused feature.
+// This will need to be re-introduced when the secrets vault is built.
 
 interface JourneyFormProps {
-  onSubmit: (data: { name: string; domain: string; steps: JourneyStep[] }) => void;
-  initialData?: { name: string; domain: string; steps: JourneyStep[] };
+  onSubmit: (data: { name: string; steps: JourneyStep[] }) => void;
+  initialData?: { name: string; steps: JourneyStep[] };
   submitButtonText?: string;
 }
 
@@ -32,19 +36,12 @@ const defaultStep: JourneyStep = {
 
 export default function JourneyForm({
   onSubmit,
-  initialData = { name: '', domain: '', steps: [defaultStep] },
+  initialData = { name: '', steps: [defaultStep] },
   submitButtonText = 'Create Journey',
 }: JourneyFormProps) {
   const navigate = useNavigate();
   const [name, setName] = useState(initialData.name);
-  const [domain, setDomain] = useState(initialData.domain);
   const [steps, setSteps] = useState<JourneyStep[]>(initialData.steps);
-  const [secrets, setSecrets] = useState<Secret[]>([]);
-
-  useEffect(() => {
-    // Fetch available secrets when the component mounts
-    getSecrets().then(setSecrets).catch(err => console.error("Failed to fetch secrets", err));
-  }, []);
 
   const handleStepChange = (index: number, field: keyof JourneyStep | keyof JourneyStep['params'], value: any) => {
     const newSteps = [...steps];
@@ -58,6 +55,12 @@ export default function JourneyForm({
     setSteps(newSteps);
   };
 
+  const handleCheckboxChange = (index: number, field: keyof JourneyStep['params'], checked: boolean) => {
+    const newSteps = [...steps];
+    newSteps[index].params = { ...newSteps[index].params, [field]: checked };
+    setSteps(newSteps);
+  };
+
   const addStep = () => {
     setSteps([...steps, { ...defaultStep }]);
   };
@@ -68,45 +71,7 @@ export default function JourneyForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({ name, domain, steps });
-  };
-
-  // A helper component to select a secret
-  const SecretSelector = ({ onSelect }: { onSelect: (name: string) => void }) => {
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const open = Boolean(anchorEl);
-
-    const handleClick = (event: React.MouseEvent<HTMLElement>) => {
-      setAnchorEl(event.currentTarget);
-    };
-
-    const handleClose = () => {
-      setAnchorEl(null);
-    };
-
-    const handleSelect = (secretName: string) => {
-      onSelect(`{{secrets.${secretName}}}`);
-      handleClose();
-    };
-
-    return (
-      <>
-        <IconButton onClick={handleClick} size="small" title="Insert Secret">
-          <VpnKey />
-        </IconButton>
-        <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
-          {secrets.length === 0 ? (
-            <MenuItem disabled>No secrets found</MenuItem>
-          ) : (
-            secrets.map((secret) => (
-              <MenuItem key={secret._id} onClick={() => handleSelect(secret.name)}>
-                {secret.name}
-              </MenuItem>
-            ))
-          )}
-        </Menu>
-      </>
-    );
+    onSubmit({ name, steps });
   };
 
   const renderStepParams = (step: JourneyStep, index: number) => {
@@ -119,13 +84,6 @@ export default function JourneyForm({
             onChange={(e) => handleStepChange(index, 'url', e.target.value)}
             fullWidth
             required
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <SecretSelector onSelect={(val) => handleStepChange(index, 'url', val)} />
-                </InputAdornment>
-              ),
-            }}
           />
         );
       case 'click':
@@ -158,14 +116,63 @@ export default function JourneyForm({
                 onChange={(e) => handleStepChange(index, 'text', e.target.value)}
                 fullWidth
                 required
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <SecretSelector onSelect={(val) => handleStepChange(index, 'text', val)} />
-                    </InputAdornment>
-                  ),
-                }}
               />
+            </Grid>
+          </>
+        );
+      case 'expect':
+        return (
+          <>
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth>
+                <InputLabel>Target</InputLabel>
+                <Select
+                  value={step.params.target || 'locator'}
+                  label="Target"
+                  onChange={(e) => handleStepChange(index, 'target', e.target.value)}
+                >
+                  <MenuItem value="locator">Locator</MenuItem>
+                  <MenuItem value="page">Page</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            {step.params.target !== 'page' && (
+              <Grid item xs={12} sm={8}>
+                <TextField
+                  label="Selector"
+                  value={step.params.selector || ''}
+                  onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
+                  fullWidth
+                />
+              </Grid>
+            )}
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Assertion (e.g., toHaveText)"
+                value={step.params.assertion || ''}
+                onChange={(e) => handleStepChange(index, 'assertion', e.target.value)}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Value (optional)"
+                value={step.params.value || ''}
+                onChange={(e) => handleStepChange(index, 'value', e.target.value)}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12}>
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            checked={!!step.params.soft}
+                            onChange={(e) => handleCheckboxChange(index, 'soft', e.target.checked)}
+                        />
+                    }
+                    label="Soft Assertion (does not stop test on failure)"
+                />
             </Grid>
           </>
         );
@@ -176,26 +183,14 @@ export default function JourneyForm({
 
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ p: 3 }}>
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="Journey Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            fullWidth
-            required
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            label="Target Domain (e.g., example.com)"
-            value={domain}
-            onChange={(e) => setDomain(e.target.value)}
-            fullWidth
-            required
-          />
-        </Grid>
-      </Grid>
+      <TextField
+        label="Journey Name"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        fullWidth
+        required
+        sx={{ mb: 3 }}
+      />
 
       <Typography variant="h6" sx={{ mb: 1 }}>Steps</Typography>
 
@@ -214,6 +209,7 @@ export default function JourneyForm({
                   <MenuItem value="click">Click</MenuItem>
                   <MenuItem value="type">Type</MenuItem>
                   <MenuItem value="waitForSelector">Wait For Selector</MenuItem>
+                  <MenuItem value="expect">Expect (Assertion)</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -231,21 +227,23 @@ export default function JourneyForm({
         </Paper>
       ))}
 
-      <Button
-        type="button"
-        onClick={addStep}
-        startIcon={<AddCircle />}
-        sx={{ mr: 2 }}
-      >
-        Add Step
-      </Button>
+      <Box sx={{ mt: 2 }}>
+        <Button
+          type="button"
+          onClick={addStep}
+          startIcon={<AddCircle />}
+          sx={{ mr: 2 }}
+        >
+          Add Step
+        </Button>
 
-      <Button type="submit" variant="contained" sx={{ mr: 2 }}>
-        {submitButtonText}
-      </Button>
-      <Button variant="outlined" onClick={() => navigate('/journeys')}>
-        Cancel
-      </Button>
+        <Button type="submit" variant="contained" sx={{ mr: 2 }}>
+          {submitButtonText}
+        </Button>
+        <Button variant="outlined" onClick={() => navigate('/journeys')}>
+          Cancel
+        </Button>
+      </Box>
     </Box>
   );
 }

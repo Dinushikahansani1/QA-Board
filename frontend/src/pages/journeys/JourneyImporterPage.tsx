@@ -82,12 +82,9 @@ export default function JourneyImporterPage() {
             variant="outlined"
             inputProps={{ style: { fontFamily: 'monospace' } }}
           />
-          <Box sx={{ mt: 2, display: 'flex', alignItems: 'center' }}>
-            <Button type="submit" variant="contained" disabled={loading || !name || !code} sx={{ mr: 2 }}>
+          <Box sx={{ mt: 2, position: 'relative' }}>
+            <Button type="submit" variant="contained" disabled={loading || !name || !code}>
               Import and Create Journey
-            </Button>
-            <Button variant="outlined" onClick={() => navigate('/journeys')} disabled={loading}>
-              Cancel
             </Button>
             {loading && (
               <CircularProgress
