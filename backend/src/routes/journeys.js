@@ -6,6 +6,7 @@ const authMiddleware = require('../middleware/auth');
 const { runJourney } = require('../services/automation');
 const { generateJourneyFromText } = require('../services/llm');
 const { parsePlaywrightCode } = require('../services/parser');
+const { generatePlaywrightCode } = require('../services/code-generator');
 
 // Use auth middleware for all journey routes
 router.use(authMiddleware);
@@ -21,6 +22,20 @@ router.post('/generate-from-text', async (req, res) => {
     res.json(journeyData);
   } catch (error) {
     res.status(500).json({ error: 'Failed to generate journey from text.' });
+  }
+});
+
+// POST /journeys/generate-code - Generate Playwright code from steps
+router.post('/generate-code', (req, res) => {
+  try {
+    const { steps } = req.body;
+    if (!steps || !Array.isArray(steps)) {
+      return res.status(400).json({ error: 'Steps array is required.' });
+    }
+    const code = generatePlaywrightCode(steps);
+    res.json({ code });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to generate code.' });
   }
 });
 
@@ -68,7 +83,7 @@ router.get('/:id', async (req, res) => {
 // PUT /journeys/:id - Update a journey
 router.put('/:id', async (req, res) => {
   try {
-    const { name, code } = req.body;
+    const { name, code, steps, domain } = req.body;
     const journeyToUpdate = await Journey.findOne({ _id: req.params.id, user: req.user.id });
 
     if (!journeyToUpdate) {
@@ -77,16 +92,20 @@ router.put('/:id', async (req, res) => {
 
     const updateData = { name: name || journeyToUpdate.name };
 
-    if (code) {
+    if (steps) {
+      updateData.steps = steps;
+      updateData.domain = domain;
+      updateData.code = code;
+    } else if (code) {
       const tempDir = path.join(__dirname, '..', '..', 'temp_journeys');
       await fs.mkdir(tempDir, { recursive: true });
       const tempFile = path.join(tempDir, `update-${Date.now()}.js`);
       await fs.writeFile(tempFile, code);
 
-      const { steps, domain } = await parsePlaywrightCode(tempFile);
+      const { steps: newSteps, domain: newDomain } = await parsePlaywrightCode(tempFile);
 
-      updateData.steps = steps;
-      updateData.domain = domain;
+      updateData.steps = newSteps;
+      updateData.domain = newDomain;
       updateData.code = code;
 
       await fs.unlink(tempFile);

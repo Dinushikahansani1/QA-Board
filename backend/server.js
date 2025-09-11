@@ -41,6 +41,7 @@ app.use('/api/notification-settings', notificationSettingsRoutes);
 app.use('/api/templates', templateRoutes);
 app.use('/api/secrets', secretRoutes);
 
+
 const http = require('http');
 const webSocketService = require('./src/services/websocket');
 

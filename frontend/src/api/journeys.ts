@@ -80,6 +80,11 @@ export const importJourney = async (name: string, code: string): Promise<Journey
   return response.data;
 };
 
+export const generateCode = async (steps: JourneyStep[]): Promise<{ code: string }> => {
+  const response = await api.post('/api/journeys/generate-code', { steps });
+  return response.data;
+};
+
 export interface NotificationSettings {
   failureThreshold: number;
   emails: string[];
