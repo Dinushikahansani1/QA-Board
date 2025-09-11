@@ -5,11 +5,14 @@ import api from './axios';
 type Selector = string | { method: string; args: any[] };
 
 export interface JourneyStep {
-  action: 'goto' | 'click' | 'type' | 'waitForSelector';
+  action: 'goto' | 'click' | 'type' | 'waitForSelector' | 'toBeVisible' | 'toHaveText' | 'toHaveAttribute';
   params: {
     selector?: Selector;
     url?: string;
     text?: string;
+    attribute?: string;
+    value?: string;
+    not?: boolean;
   };
 }
 
