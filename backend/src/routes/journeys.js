@@ -1,8 +1,12 @@
 const router = require('express').Router();
+const fs = require('fs').promises;
+const path = require('path');
 const Journey = require('../models/Journey');
 const authMiddleware = require('../middleware/auth');
 const { runJourney } = require('../services/automation');
 const { generateJourneyFromText } = require('../services/llm');
+const { generatePlaywrightCode } = require('../services/code-generator');
+const { parsePlaywrightCode } = require('../services/parser');
 
 // Use auth middleware for all journey routes
 router.use(authMiddleware);
@@ -25,12 +29,20 @@ router.post('/generate-from-text', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { name, domain, steps } = req.body;
+    const code = generatePlaywrightCode(steps);
     const journey = await Journey.create({
       name,
       domain,
       steps,
+      code,
       user: req.user.id
     });
+
+    const journeysDir = path.join(__dirname, '..', 'journeys');
+    await fs.mkdir(journeysDir, { recursive: true });
+    const journeyFile = path.join(journeysDir, `${journey._id}.js`);
+    await fs.writeFile(journeyFile, code);
+
     res.status(201).json(journey);
   } catch (error) {
     res.status(400).json({ error: error.message });
@@ -65,16 +77,48 @@ router.get('/:id', async (req, res) => {
 // PUT /journeys/:id - Update a journey
 router.put('/:id', async (req, res) => {
   try {
-    const { name, domain, steps } = req.body;
-    const journey = await Journey.findOneAndUpdate(
-      { _id: req.params.id, user: req.user.id },
-      { name, domain, steps },
-      { new: true }
-    );
-    if (!journey) {
+    const { name, domain, steps, code } = req.body;
+    const journeyToUpdate = await Journey.findOne({ _id: req.params.id, user: req.user.id });
+
+    if (!journeyToUpdate) {
       return res.status(404).json({ error: 'Journey not found' });
     }
-    res.json(journey);
+
+    const updateData = { name: name || journeyToUpdate.name };
+    let newCode = code;
+
+    if (steps) {
+      // If steps are provided, generate new code
+      newCode = generatePlaywrightCode(steps);
+      updateData.steps = steps;
+      updateData.domain = domain;
+      updateData.code = newCode;
+    } else if (code) {
+      // If only code is provided, parse it
+      const tempDir = path.join(__dirname, '..', '..', 'temp_journeys');
+      await fs.mkdir(tempDir, { recursive: true });
+      const tempFile = path.join(tempDir, `update-${Date.now()}.js`);
+      await fs.writeFile(tempFile, code);
+      const { steps: newSteps, domain: newDomain } = await parsePlaywrightCode(tempFile);
+      await fs.unlink(tempFile);
+
+      updateData.steps = newSteps;
+      updateData.domain = newDomain;
+      updateData.code = code;
+    }
+
+    const updatedJourney = await Journey.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+
+    // Update the journey file
+    const journeysDir = path.join(__dirname, '..', 'journeys');
+    const journeyFile = path.join(journeysDir, `${updatedJourney._id}.js`);
+    await fs.writeFile(journeyFile, newCode || updatedJourney.code);
+
+    res.json(updatedJourney);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

@@ -34,8 +34,14 @@ router.post('/journey', async (req, res) => {
       name,
       domain,
       steps,
+      code,
       user: req.user.id,
     });
+
+    const journeysDir = path.join(__dirname, '..', 'journeys');
+    await fs.mkdir(journeysDir, { recursive: true });
+    const journeyFile = path.join(journeysDir, `${journey._id}.js`);
+    await fs.writeFile(journeyFile, code);
 
     res.status(201).json(journey);
   } catch (error) {
