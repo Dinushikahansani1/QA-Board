@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Box, Typography, Paper, Alert, CircularProgress, Button, Modal, TextareaAutosize } from '@mui/material';
 import JourneyForm from './JourneyForm';
-import { getJourney, updateJourney, type Journey, type JourneyStep } from '../../api/journeys';
+import { getJourney, updateJourney, generateCode, type Journey, type JourneyStep } from '../../api/journeys';
 
 export default function JourneyEditor() {
   const { id } = useParams<{ id: string }>();
@@ -39,7 +39,8 @@ export default function JourneyEditor() {
   const handleSubmit = async (data: { name: string; steps: JourneyStep[] }) => {
     if (!id || !journey) return;
     try {
-      await updateJourney(id, { ...data, domain: journey.domain });
+      const { code: newCode } = await generateCode(data.steps);
+      await updateJourney(id, { ...data, domain: journey.domain, code: newCode });
       navigate('/journeys');
     } catch (err) {
       setError('Failed to update journey.');
