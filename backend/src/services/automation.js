@@ -1,5 +1,4 @@
 const { chromium, expect } = require('playwright');
-const { exec } = require('child_process');
 const Journey = require('../models/Journey');
 const Secret = require('../models/Secret');
 const { decrypt } = require('./encryption');
@@ -17,58 +16,114 @@ const path = require('path');
 // }
 
 async function runJourney(journey) {
+  const browser = await chromium.launch();
+  const context = await browser.newContext();
+  const page = await context.newPage();
   const logs = [];
   let status = 'success';
+  // let screenshotPath;
 
   try {
-    if (!journey.code) {
-      throw new Error('Journey has no code to run.');
-    }
-
+    // 1. Fetch and decrypt secrets for the user
     const userSecrets = await Secret.find({ user: journey.user });
     const secretMap = new Map();
     for (const secret of userSecrets) {
       secretMap.set(secret.name, decrypt(secret.value));
     }
 
+    // 2. Create a substitution function
     const substituteSecrets = (text) => {
       if (typeof text !== 'string') return text;
+      // Regex updated to handle optional whitespace around the secret name
       return text.replace(/{{secrets\.\s*([a-zA-Z0-9_]+)\s*}}/g, (match, secretName) => {
         if (secretMap.has(secretName)) {
           return secretMap.get(secretName);
         }
+        // If secret not found, return the placeholder to make it obvious in logs
         logs.push(`Warning: Secret "${secretName}" not found in vault.`);
         return match;
       });
     };
 
-    const processedCode = substituteSecrets(journey.code);
+    for (const step of journey.steps) {
+      // 3. Substitute secrets in params before execution
+      const processedParams = {};
+      for (const key in step.params) {
+        processedParams[key] = substituteSecrets(step.params[key]);
+      }
 
-    const tempDir = path.join(__dirname, '..', '..', 'temp_journeys');
-    await fs.promises.mkdir(tempDir, { recursive: true });
-    const tempFile = path.join(tempDir, `run-${journey._id}-${Date.now()}.js`);
-    await fs.promises.writeFile(tempFile, processedCode);
+      logs.push(`Executing action: ${step.action} with params: ${JSON.stringify(processedParams)}`);
 
-    await new Promise((resolve) => {
-      exec(`npx playwright test ${tempFile}`, (error, stdout, stderr) => {
-        if (error) {
-          logs.push(`Execution error: ${error.message}`);
-          status = 'failure';
+      // Helper function to get a locator object safely from either a string or our structured object
+      const getLocator = (selector) => {
+        if (typeof selector === 'object' && selector.method && Array.isArray(selector.args)) {
+          // It's our structured locator from the parser
+          if (typeof page[selector.method] === 'function') {
+            return page[selector.method](...selector.args);
+          } else {
+            throw new Error(`Unsupported locator method: ${selector.method}`);
+          }
         }
-        if (stderr) {
-          logs.push(`stderr: ${stderr}`);
-        }
-        logs.push(`stdout: ${stdout}`);
-        resolve();
-      });
-    });
+        // It's a simple string selector for manually created steps
+        return page.locator(selector);
+      };
 
-    await fs.promises.unlink(tempFile);
+      const getAssertion = (locator, not) => {
+        return not ? expect(locator).not : expect(locator);
+      };
 
+      switch (step.action) {
+        case 'goto':
+          await page.goto(processedParams.url);
+          break;
+        case 'click':
+          {
+            const locator = getLocator(processedParams.selector);
+            await locator.click();
+          }
+          break;
+        case 'type':
+          {
+            const locator = getLocator(processedParams.selector);
+            await locator.fill(processedParams.text); // Using fill is more robust for locators
+          }
+          break;
+        case 'waitForSelector':
+          // This action is more for manual creation, recorded journeys will have better waits.
+          await page.waitForSelector(processedParams.selector);
+          break;
+        // Assertions
+        case 'toHaveText':
+          {
+            const locator = getLocator(processedParams.selector);
+            await getAssertion(locator, processedParams.not).toHaveText(processedParams.text);
+          }
+          break;
+        case 'toBeVisible':
+          {
+            const locator = getLocator(processedParams.selector);
+            await getAssertion(locator, processedParams.not).toBeVisible();
+          }
+          break;
+        case 'toHaveAttribute':
+          {
+            const locator = getLocator(processedParams.selector);
+            await getAssertion(locator, processedParams.not).toHaveAttribute(processedParams.attribute, processedParams.value);
+          }
+          break;
+        default:
+          throw new Error(`Unsupported action: ${step.action}`);
+      }
+    }
   } catch (error) {
     status = 'failure';
     logs.push(`Error: ${error.message}`);
+    // Screenshot functionality commented out for now
+    // const screenshotFileName = `${journey._id}-${Date.now()}.png`;
+    // screenshotPath = path.join(screenshotsDir, screenshotFileName);
+    // await page.screenshot({ path: screenshotPath });
   } finally {
+    await browser.close();
 
     const testResult = await TestResult.create({
       journey: journey._id,

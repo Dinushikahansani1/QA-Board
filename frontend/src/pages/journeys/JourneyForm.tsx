@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -18,6 +18,7 @@ import {
 import { AddCircle, Delete, VpnKey } from '@mui/icons-material';
 import type { JourneyStep } from '../../api/journeys';
 import { getSecrets, type Secret } from '../../api/secrets';
+import GuidedSelectorBuilder from './GuidedSelectorBuilder';
 
 interface JourneyFormProps {
   onSubmit: (data: { name: string; domain: string; steps: JourneyStep[] }) => void;
@@ -46,7 +47,7 @@ export default function JourneyForm({
     getSecrets().then(setSecrets).catch(err => console.error("Failed to fetch secrets", err));
   }, []);
 
-  const handleStepChange = (index: number, field: keyof JourneyStep | keyof JourneyStep['params'], value: any) => {
+  const handleStepChange = useCallback((index: number, field: keyof JourneyStep | keyof JourneyStep['params'], value: any) => {
     const newSteps = [...steps];
     if (field === 'action') {
       newSteps[index] = { ...newSteps[index], action: value, params: {} }; // Reset params on action change
@@ -63,7 +64,7 @@ export default function JourneyForm({
       newSteps[index].params = { ...newSteps[index].params, [field]: value };
     }
     setSteps(newSteps);
-  };
+  }, [steps]);
 
   const addStep = () => {
     setSteps([...steps, { ...defaultStep }]);
@@ -138,32 +139,12 @@ export default function JourneyForm({
         );
       case 'click':
       case 'waitForSelector':
-        return (
-          <TextField
-            label="Element Selector"
-            helperText="e.g., #login-button or .product-name"
-            value={typeof step.params.selector === 'object' ? JSON.stringify(step.params.selector, null, 2) : step.params.selector || ''}
-            onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
-            fullWidth
-            required
-            multiline
-            rows={4}
-          />
-        );
+        return <GuidedSelectorBuilder selector={step.params.selector} onSelectorChange={(sel) => handleStepChange(index, 'selector', sel)} />;
       case 'type':
         return (
           <>
             <Grid item xs={6}>
-              <TextField
-                label="Element Selector"
-                helperText="e.g., #username"
-                value={typeof step.params.selector === 'object' ? JSON.stringify(step.params.selector, null, 2) : step.params.selector || ''}
-                onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
-                fullWidth
-                required
-                multiline
-                rows={4}
-              />
+              <GuidedSelectorBuilder selector={step.params.selector} onSelectorChange={(sel) => handleStepChange(index, 'selector', sel)} />
             </Grid>
             <Grid item xs={6}>
               <TextField
@@ -185,32 +166,12 @@ export default function JourneyForm({
           </>
         );
       case 'toBeVisible':
-        return (
-          <TextField
-            label="Element Selector"
-            helperText="e.g., #success-message"
-            value={typeof step.params.selector === 'object' ? JSON.stringify(step.params.selector, null, 2) : step.params.selector || ''}
-            onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
-            fullWidth
-            required
-            multiline
-            rows={4}
-          />
-        );
+        return <GuidedSelectorBuilder selector={step.params.selector} onSelectorChange={(sel) => handleStepChange(index, 'selector', sel)} />;
       case 'toHaveText':
         return (
           <>
             <Grid item xs={6}>
-              <TextField
-                label="Element Selector"
-                helperText="e.g., h1"
-                value={typeof step.params.selector === 'object' ? JSON.stringify(step.params.selector, null, 2) : step.params.selector || ''}
-                onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
-                fullWidth
-                required
-                multiline
-                rows={4}
-              />
+              <GuidedSelectorBuilder selector={step.params.selector} onSelectorChange={(sel) => handleStepChange(index, 'selector', sel)} />
             </Grid>
             <Grid item xs={6}>
               <TextField
@@ -235,16 +196,7 @@ export default function JourneyForm({
         return (
           <>
             <Grid item xs={4}>
-              <TextField
-                label="Element Selector"
-                helperText="e.g., a.link"
-                value={typeof step.params.selector === 'object' ? JSON.stringify(step.params.selector, null, 2) : step.params.selector || ''}
-                onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
-                fullWidth
-                required
-                multiline
-                rows={4}
-              />
+              <GuidedSelectorBuilder selector={step.params.selector} onSelectorChange={(sel) => handleStepChange(index, 'selector', sel)} />
             </Grid>
             <Grid item xs={4}>
               <TextField
