@@ -58,11 +58,23 @@ async function runJourney(journey) {
       const getLocator = (selector) => {
         if (typeof selector === 'object' && selector.method && Array.isArray(selector.args)) {
           // It's our structured locator from the parser
+          let locator;
           if (typeof page[selector.method] === 'function') {
-            return page[selector.method](...selector.args);
+            locator = page[selector.method](...selector.args);
           } else {
             throw new Error(`Unsupported locator method: ${selector.method}`);
           }
+
+          if (selector.chain && Array.isArray(selector.chain)) {
+            for (const chainedCall of selector.chain) {
+              if (typeof locator[chainedCall.action] === 'function') {
+                locator = locator[chainedCall.action](...chainedCall.args);
+              } else {
+                throw new Error(`Unsupported chained action: ${chainedCall.action}`);
+              }
+            }
+          }
+          return locator;
         }
         // It's a simple string selector for manually created steps
         return page.locator(selector);
@@ -115,6 +127,18 @@ async function runJourney(journey) {
           {
             const locator = getLocator(processedParams.selector);
             await getAssertion(locator, processedParams.not).toHaveAttribute(processedParams.attribute, processedParams.value);
+          }
+          break;
+        case 'press':
+          {
+            const locator = getLocator(processedParams.selector);
+            await locator.press(processedParams.text);
+          }
+          break;
+        case 'selectOption':
+          {
+            const locator = getLocator(processedParams.selector);
+            await locator.selectOption(processedParams.value);
           }
           break;
         default:

@@ -169,6 +169,52 @@ export default function JourneyForm({
             </Grid>
           </>
         );
+      case 'press':
+        return (
+          <>
+            <Grid item xs={6}>
+              <TextField
+                label="Selector"
+                value={step.params.selector || ''}
+                onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="Key"
+                value={step.params.text || ''}
+                onChange={(e) => handleStepChange(index, 'text', e.target.value)}
+                fullWidth
+                required
+              />
+            </Grid>
+          </>
+        );
+      case 'selectOption':
+        return (
+          <>
+            <Grid item xs={6}>
+              <TextField
+                label="Selector"
+                value={step.params.selector || ''}
+                onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="Value"
+                value={step.params.value || ''}
+                onChange={(e) => handleStepChange(index, 'value', e.target.value)}
+                fullWidth
+                required
+              />
+            </Grid>
+          </>
+        );
       case 'toBeVisible':
         return (
           <TextField
@@ -293,6 +339,8 @@ export default function JourneyForm({
                   <MenuItem value="goto">Go To</MenuItem>
                   <MenuItem value="click">Click</MenuItem>
                   <MenuItem value="type">Type</MenuItem>
+                  <MenuItem value="press">Press Key</MenuItem>
+                  <MenuItem value="selectOption">Select Option</MenuItem>
                   <MenuItem value="waitForSelector">Wait For Selector</MenuItem>
                   <MenuItem value="toBeVisible">Is Visible</MenuItem>
                   <MenuItem value="toHaveText">Has Text</MenuItem>
