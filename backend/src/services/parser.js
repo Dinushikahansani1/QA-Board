@@ -96,6 +96,48 @@ async function parsePlaywrightCode(filePath) {
           }
         }
       }
+
+      // Case 3: Assertions
+      let expectCall;
+      let isNot = false;
+
+      if (callee.object.type === 'CallExpression' && callee.object.callee.name === 'expect') {
+        expectCall = callee.object;
+      } else if (callee.object.type === 'MemberExpression' &&
+                 callee.object.property.name === 'not' &&
+                 callee.object.object.type === 'CallExpression' &&
+                 callee.object.object.callee.name === 'expect') {
+        expectCall = callee.object.object;
+        isNot = true;
+      }
+
+      if (expectCall) {
+        const action = callee.property.name;
+        const locatorCall = expectCall.arguments[0];
+
+        if (locatorCall.type === 'CallExpression' && locatorCall.callee.type === 'MemberExpression' && locatorCall.callee.object.name === 'page') {
+          const selector = {
+            method: locatorCall.callee.property.name,
+            args: locatorCall.arguments.map(convertNodeToValue),
+          };
+
+          const params = { selector };
+          if (isNot) {
+            params.not = true;
+          }
+
+          if (awaitArg.arguments.length > 0) {
+            if (action === 'toHaveText') {
+              params.text = convertNodeToValue(awaitArg.arguments[0]);
+            } else if (action === 'toHaveAttribute') {
+              params.attribute = convertNodeToValue(awaitArg.arguments[0]);
+              params.value = convertNodeToValue(awaitArg.arguments[1]);
+            }
+          }
+
+          steps.push({ action, params });
+        }
+      }
     },
   });
 
