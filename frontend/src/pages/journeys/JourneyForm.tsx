@@ -122,6 +122,7 @@ export default function JourneyForm({
         return (
           <TextField
             label="URL"
+            placeholder="e.g., https://example.com"
             value={step.params.url || ''}
             onChange={(e) => handleStepChange(index, 'url', e.target.value)}
             fullWidth
@@ -139,7 +140,8 @@ export default function JourneyForm({
       case 'waitForSelector':
         return (
           <TextField
-            label="Selector"
+            label="Element Selector"
+            helperText="e.g., #login-button or .product-name"
             value={typeof step.params.selector === 'object' ? JSON.stringify(step.params.selector, null, 2) : step.params.selector || ''}
             onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
             fullWidth
@@ -153,7 +155,8 @@ export default function JourneyForm({
           <>
             <Grid item xs={6}>
               <TextField
-                label="Selector"
+                label="Element Selector"
+                helperText="e.g., #username"
                 value={typeof step.params.selector === 'object' ? JSON.stringify(step.params.selector, null, 2) : step.params.selector || ''}
                 onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
                 fullWidth
@@ -165,6 +168,7 @@ export default function JourneyForm({
             <Grid item xs={6}>
               <TextField
                 label="Text"
+                placeholder="Text to type"
                 value={step.params.text || ''}
                 onChange={(e) => handleStepChange(index, 'text', e.target.value)}
                 fullWidth
@@ -183,7 +187,8 @@ export default function JourneyForm({
       case 'toBeVisible':
         return (
           <TextField
-            label="Selector"
+            label="Element Selector"
+            helperText="e.g., #success-message"
             value={typeof step.params.selector === 'object' ? JSON.stringify(step.params.selector, null, 2) : step.params.selector || ''}
             onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
             fullWidth
@@ -197,7 +202,8 @@ export default function JourneyForm({
           <>
             <Grid item xs={6}>
               <TextField
-                label="Selector"
+                label="Element Selector"
+                helperText="e.g., h1"
                 value={typeof step.params.selector === 'object' ? JSON.stringify(step.params.selector, null, 2) : step.params.selector || ''}
                 onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
                 fullWidth
@@ -209,6 +215,7 @@ export default function JourneyForm({
             <Grid item xs={6}>
               <TextField
                 label="Text"
+                placeholder="Expected text"
                 value={step.params.text || ''}
                 onChange={(e) => handleStepChange(index, 'text', e.target.value)}
                 fullWidth
@@ -229,7 +236,8 @@ export default function JourneyForm({
           <>
             <Grid item xs={4}>
               <TextField
-                label="Selector"
+                label="Element Selector"
+                helperText="e.g., a.link"
                 value={typeof step.params.selector === 'object' ? JSON.stringify(step.params.selector, null, 2) : step.params.selector || ''}
                 onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
                 fullWidth
@@ -241,6 +249,7 @@ export default function JourneyForm({
             <Grid item xs={4}>
               <TextField
                 label="Attribute"
+                placeholder="e.g., href"
                 value={step.params.attribute || ''}
                 onChange={(e) => handleStepChange(index, 'attribute', e.target.value)}
                 fullWidth
@@ -250,6 +259,7 @@ export default function JourneyForm({
             <Grid item xs={4}>
               <TextField
                 label="Value"
+                placeholder="Expected value"
                 value={step.params.value || ''}
                 onChange={(e) => handleStepChange(index, 'value', e.target.value)}
                 fullWidth
@@ -306,13 +316,13 @@ export default function JourneyForm({
                   label="Action"
                   onChange={(e) => handleStepChange(index, 'action', e.target.value)}
                 >
-                  <MenuItem value="goto">Go To</MenuItem>
-                  <MenuItem value="click">Click</MenuItem>
-                  <MenuItem value="type">Type</MenuItem>
-                  <MenuItem value="waitForSelector">Wait For Selector</MenuItem>
-                  <MenuItem value="toBeVisible">Is Visible</MenuItem>
-                  <MenuItem value="toHaveText">Has Text</MenuItem>
-                  <MenuItem value="toHaveAttribute">Has Attribute</MenuItem>
+                  <MenuItem value="goto">Go To URL</MenuItem>
+                  <MenuItem value="click">Click on Element</MenuItem>
+                  <MenuItem value="type">Type Text</MenuItem>
+                  <MenuItem value="waitForSelector">Wait For Element</MenuItem>
+                  <MenuItem value="toBeVisible">Check if Element is Visible</MenuItem>
+                  <MenuItem value="toHaveText">Check for Text in Element</MenuItem>
+                  <MenuItem value="toHaveAttribute">Check for Element Attribute</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
