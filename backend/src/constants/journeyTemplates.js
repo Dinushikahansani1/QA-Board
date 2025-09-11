@@ -98,6 +98,16 @@ const journeyTemplates = [
       { action: 'navigate', value: '/' },
       { action: 'checkLinks' }
     ]
+  },
+  {
+    name: 'Assertion Demo',
+    description: 'A journey to demonstrate the new assertion capabilities.',
+    steps: [
+      { action: 'navigate', value: 'https://playwright.dev/' },
+      { action: 'toBeVisible', selector: 'nav >> text=Docs' },
+      { action: 'toHaveText', selector: 'h1', text: 'Playwright enables reliable end-to-end testing for modern web apps.' },
+      { action: 'toHaveAttribute', selector: 'nav >> a', attribute: 'href', value: '/docs/intro' },
+    ]
   }
 ];
 

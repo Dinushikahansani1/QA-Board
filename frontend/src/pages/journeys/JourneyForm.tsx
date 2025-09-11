@@ -169,6 +169,85 @@ export default function JourneyForm({
             </Grid>
           </>
         );
+      case 'toBeVisible':
+        return (
+          <TextField
+            label="Selector"
+            value={step.params.selector || ''}
+            onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
+            fullWidth
+            required
+          />
+        );
+      case 'toHaveText':
+        return (
+          <>
+            <Grid item xs={6}>
+              <TextField
+                label="Selector"
+                value={step.params.selector || ''}
+                onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                label="Text"
+                value={step.params.text || ''}
+                onChange={(e) => handleStepChange(index, 'text', e.target.value)}
+                fullWidth
+                required
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <SecretSelector onSelect={(val) => handleStepChange(index, 'text', val)} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+          </>
+        );
+      case 'toHaveAttribute':
+        return (
+          <>
+            <Grid item xs={4}>
+              <TextField
+                label="Selector"
+                value={step.params.selector || ''}
+                onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={4}>
+              <TextField
+                label="Attribute"
+                value={step.params.attribute || ''}
+                onChange={(e) => handleStepChange(index, 'attribute', e.target.value)}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={4}>
+              <TextField
+                label="Value"
+                value={step.params.value || ''}
+                onChange={(e) => handleStepChange(index, 'value', e.target.value)}
+                fullWidth
+                required
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <SecretSelector onSelect={(val) => handleStepChange(index, 'value', val)} />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+          </>
+        );
       default:
         return null;
     }
@@ -214,6 +293,9 @@ export default function JourneyForm({
                   <MenuItem value="click">Click</MenuItem>
                   <MenuItem value="type">Type</MenuItem>
                   <MenuItem value="waitForSelector">Wait For Selector</MenuItem>
+                  <MenuItem value="toBeVisible">Is Visible</MenuItem>
+                  <MenuItem value="toHaveText">Has Text</MenuItem>
+                  <MenuItem value="toHaveAttribute">Has Attribute</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

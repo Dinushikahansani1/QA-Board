@@ -20,6 +20,13 @@ Each object in the "steps" array must have an "action" and a "params" object. Th
   - params: { "selector": "...", "text": "..." }
 - "waitForSelector": Waits for an element to be present on the page.
   - params: { "selector": "..." }
+- "toBeVisible": Asserts that an element is visible.
+  - params: { "selector": "...", "not": false }
+- "toHaveText": Asserts that an element has the given text.
+  - params: { "selector": "...", "text": "...", "not": false }
+- "toHaveAttribute": Asserts that an element has the given attribute with the given value.
+  - params: { "selector": "...", "attribute": "...", "value": "...", "not": false }
+
 
 You must only use the actions listed above. For selectors, use standard CSS selectors. Be precise.
 
@@ -57,9 +64,11 @@ Your JSON output:
       }
     },
     {
-      "action": "waitForSelector",
+      "action": "toHaveText",
       "params": {
-        "selector": "//*[contains(text(), 'Welcome back!')]"
+        "selector": "body",
+        "text": "Welcome back!",
+        "not": false
       }
     }
   ]

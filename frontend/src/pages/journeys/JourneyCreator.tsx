@@ -22,6 +22,15 @@ export default function JourneyCreator() {
             return { action: step.action, params: { selector: step.selector } };
           case 'type':
             return { action: 'type', params: { selector: step.selector, text: step.value } };
+          case 'toBeVisible':
+            return { action: 'toBeVisible', params: { selector: step.selector } };
+          case 'toHaveText':
+            return { action: 'toHaveText', params: { selector: step.selector, text: step.text } };
+          case 'toHaveAttribute':
+            return {
+              action: 'toHaveAttribute',
+              params: { selector: step.selector, attribute: step.attribute, value: step.value },
+            };
           default:
             // For actions like waitForNavigation, waitForText, request, checkLinks
             // that are not supported by the form, we can either ignore them or

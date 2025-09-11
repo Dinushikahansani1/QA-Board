@@ -1,4 +1,4 @@
-const playwright = require('playwright');
+const { chromium, expect } = require('playwright');
 const Journey = require('../models/Journey');
 const Secret = require('../models/Secret');
 const { decrypt } = require('./encryption');
@@ -16,7 +16,7 @@ const path = require('path');
 // }
 
 async function runJourney(journey) {
-  const browser = await playwright.chromium.launch();
+  const browser = await chromium.launch();
   const context = await browser.newContext();
   const page = await context.newPage();
   const logs = [];
@@ -68,21 +68,48 @@ async function runJourney(journey) {
         return page.locator(selector);
       };
 
+      const getAssertion = (locator, not) => {
+        return not ? expect(locator).not : expect(locator);
+      };
+
       switch (step.action) {
         case 'goto':
           await page.goto(processedParams.url);
           break;
         case 'click':
-          const clickLocator = getLocator(processedParams.selector);
-          await clickLocator.click();
+          {
+            const locator = getLocator(processedParams.selector);
+            await locator.click();
+          }
           break;
         case 'type':
-          const typeLocator = getLocator(processedParams.selector);
-          await typeLocator.fill(processedParams.text); // Using fill is more robust for locators
+          {
+            const locator = getLocator(processedParams.selector);
+            await locator.fill(processedParams.text); // Using fill is more robust for locators
+          }
           break;
         case 'waitForSelector':
           // This action is more for manual creation, recorded journeys will have better waits.
           await page.waitForSelector(processedParams.selector);
+          break;
+        // Assertions
+        case 'toHaveText':
+          {
+            const locator = getLocator(processedParams.selector);
+            await getAssertion(locator, processedParams.not).toHaveText(processedParams.text);
+          }
+          break;
+        case 'toBeVisible':
+          {
+            const locator = getLocator(processedParams.selector);
+            await getAssertion(locator, processedParams.not).toBeVisible();
+          }
+          break;
+        case 'toHaveAttribute':
+          {
+            const locator = getLocator(processedParams.selector);
+            await getAssertion(locator, processedParams.not).toHaveAttribute(processedParams.attribute, processedParams.value);
+          }
           break;
         default:
           throw new Error(`Unsupported action: ${step.action}`);
