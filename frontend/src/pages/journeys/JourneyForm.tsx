@@ -180,6 +180,7 @@ export default function JourneyForm({
           />
         );
       case 'toHaveText':
+      case 'toContainText':
         return (
           <>
             <Grid item xs={6}>
@@ -295,6 +296,7 @@ export default function JourneyForm({
                   <MenuItem value="waitForSelector">Wait For Selector</MenuItem>
                   <MenuItem value="toBeVisible">Is Visible</MenuItem>
                   <MenuItem value="toHaveText">Has Text</MenuItem>
+                  <MenuItem value="toContainText">Contains Text</MenuItem>
                   <MenuItem value="toHaveAttribute">Has Attribute</MenuItem>
                 </Select>
               </FormControl>
