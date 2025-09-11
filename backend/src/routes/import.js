@@ -26,6 +26,10 @@ router.post('/journey', async (req, res) => {
       return res.status(400).json({ error: 'Could not parse any actionable steps from the code provided.' });
     }
 
+    if (!domain) {
+      return res.status(400).json({ error: 'Could not determine the domain from the script. Please make sure your script includes a `page.goto()` call with a valid URL.' });
+    }
+
     const journey = await Journey.create({
       name,
       domain,

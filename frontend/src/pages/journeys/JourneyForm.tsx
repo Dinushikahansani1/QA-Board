@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -18,7 +18,6 @@ import {
 import { AddCircle, Delete, VpnKey } from '@mui/icons-material';
 import type { JourneyStep } from '../../api/journeys';
 import { getSecrets, type Secret } from '../../api/secrets';
-import GuidedSelectorBuilder from './GuidedSelectorBuilder';
 
 interface JourneyFormProps {
   onSubmit: (data: { name: string; domain: string; steps: JourneyStep[] }) => void;
@@ -47,24 +46,17 @@ export default function JourneyForm({
     getSecrets().then(setSecrets).catch(err => console.error("Failed to fetch secrets", err));
   }, []);
 
-  const handleStepChange = useCallback((index: number, field: keyof JourneyStep | keyof JourneyStep['params'], value: any) => {
+  const handleStepChange = (index: number, field: keyof JourneyStep | keyof JourneyStep['params'], value: any) => {
     const newSteps = [...steps];
     if (field === 'action') {
       newSteps[index] = { ...newSteps[index], action: value, params: {} }; // Reset params on action change
-    } else if (field === 'selector' && typeof value === 'string') {
-      try {
-        newSteps[index].params.selector = JSON.parse(value);
-      } catch (e) {
-        // If parsing fails, it's probably a simple string selector
-        newSteps[index].params.selector = value;
-      }
     } else if (field in newSteps[index]) {
       (newSteps[index] as any)[field] = value;
     } else {
       newSteps[index].params = { ...newSteps[index].params, [field]: value };
     }
     setSteps(newSteps);
-  }, [steps]);
+  };
 
   const addStep = () => {
     setSteps([...steps, { ...defaultStep }]);
@@ -123,7 +115,6 @@ export default function JourneyForm({
         return (
           <TextField
             label="URL"
-            placeholder="e.g., https://example.com"
             value={step.params.url || ''}
             onChange={(e) => handleStepChange(index, 'url', e.target.value)}
             fullWidth
@@ -139,17 +130,30 @@ export default function JourneyForm({
         );
       case 'click':
       case 'waitForSelector':
-        return <GuidedSelectorBuilder selector={step.params.selector} onSelectorChange={(sel) => handleStepChange(index, 'selector', sel)} />;
+        return (
+          <TextField
+            label="Selector"
+            value={step.params.selector || ''}
+            onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
+            fullWidth
+            required
+          />
+        );
       case 'type':
         return (
           <>
             <Grid item xs={6}>
-              <GuidedSelectorBuilder selector={step.params.selector} onSelectorChange={(sel) => handleStepChange(index, 'selector', sel)} />
+              <TextField
+                label="Selector"
+                value={step.params.selector || ''}
+                onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
+                fullWidth
+                required
+              />
             </Grid>
             <Grid item xs={6}>
               <TextField
                 label="Text"
-                placeholder="Text to type"
                 value={step.params.text || ''}
                 onChange={(e) => handleStepChange(index, 'text', e.target.value)}
                 fullWidth
@@ -166,17 +170,30 @@ export default function JourneyForm({
           </>
         );
       case 'toBeVisible':
-        return <GuidedSelectorBuilder selector={step.params.selector} onSelectorChange={(sel) => handleStepChange(index, 'selector', sel)} />;
+        return (
+          <TextField
+            label="Selector"
+            value={step.params.selector || ''}
+            onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
+            fullWidth
+            required
+          />
+        );
       case 'toHaveText':
         return (
           <>
             <Grid item xs={6}>
-              <GuidedSelectorBuilder selector={step.params.selector} onSelectorChange={(sel) => handleStepChange(index, 'selector', sel)} />
+              <TextField
+                label="Selector"
+                value={step.params.selector || ''}
+                onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
+                fullWidth
+                required
+              />
             </Grid>
             <Grid item xs={6}>
               <TextField
                 label="Text"
-                placeholder="Expected text"
                 value={step.params.text || ''}
                 onChange={(e) => handleStepChange(index, 'text', e.target.value)}
                 fullWidth
@@ -196,12 +213,17 @@ export default function JourneyForm({
         return (
           <>
             <Grid item xs={4}>
-              <GuidedSelectorBuilder selector={step.params.selector} onSelectorChange={(sel) => handleStepChange(index, 'selector', sel)} />
+              <TextField
+                label="Selector"
+                value={step.params.selector || ''}
+                onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
+                fullWidth
+                required
+              />
             </Grid>
             <Grid item xs={4}>
               <TextField
                 label="Attribute"
-                placeholder="e.g., href"
                 value={step.params.attribute || ''}
                 onChange={(e) => handleStepChange(index, 'attribute', e.target.value)}
                 fullWidth
@@ -211,7 +233,6 @@ export default function JourneyForm({
             <Grid item xs={4}>
               <TextField
                 label="Value"
-                placeholder="Expected value"
                 value={step.params.value || ''}
                 onChange={(e) => handleStepChange(index, 'value', e.target.value)}
                 fullWidth
@@ -268,13 +289,13 @@ export default function JourneyForm({
                   label="Action"
                   onChange={(e) => handleStepChange(index, 'action', e.target.value)}
                 >
-                  <MenuItem value="goto">Go To URL</MenuItem>
-                  <MenuItem value="click">Click on Element</MenuItem>
-                  <MenuItem value="type">Type Text</MenuItem>
-                  <MenuItem value="waitForSelector">Wait For Element</MenuItem>
-                  <MenuItem value="toBeVisible">Check if Element is Visible</MenuItem>
-                  <MenuItem value="toHaveText">Check for Text in Element</MenuItem>
-                  <MenuItem value="toHaveAttribute">Check for Element Attribute</MenuItem>
+                  <MenuItem value="goto">Go To</MenuItem>
+                  <MenuItem value="click">Click</MenuItem>
+                  <MenuItem value="type">Type</MenuItem>
+                  <MenuItem value="waitForSelector">Wait For Selector</MenuItem>
+                  <MenuItem value="toBeVisible">Is Visible</MenuItem>
+                  <MenuItem value="toHaveText">Has Text</MenuItem>
+                  <MenuItem value="toHaveAttribute">Has Attribute</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
