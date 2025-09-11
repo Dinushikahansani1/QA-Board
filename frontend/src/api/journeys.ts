@@ -30,6 +30,7 @@ export interface Journey {
   name: string;
   domain: string;
   steps: JourneyStep[];
+  code?: string;
   user: string;
   lastRun?: {
     status: 'success' | 'failure' | 'pending';
@@ -55,7 +56,7 @@ export const createJourney = async (data: { name: string; domain: string; steps:
   return response.data;
 };
 
-export const updateJourney = async (id: string, data: { name: string; domain: string; steps: JourneyStep[] }): Promise<Journey> => {
+export const updateJourney = async (id: string, data: { name: string; domain?: string; steps?: JourneyStep[], code?: string }): Promise<Journey> => {
   const response = await api.put(`/api/journeys/${id}`, data);
   return response.data;
 };

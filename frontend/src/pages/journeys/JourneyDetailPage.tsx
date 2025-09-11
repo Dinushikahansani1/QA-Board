@@ -13,13 +13,15 @@ import {
   Grid,
   Chip,
   Button,
+  TextareaAutosize,
 } from '@mui/material';
-import { getJourney, type Journey, type TestResult } from '../../api/journeys';
+import { getJourney, updateJourney, type Journey, type TestResult } from '../../api/journeys';
 import { ArrowBack } from '@mui/icons-material';
 
 export default function JourneyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [journey, setJourney] = useState<Journey | null>(null);
+  const [code, setCode] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +35,7 @@ export default function JourneyDetailPage() {
       try {
         const data = await getJourney(id);
         setJourney(data);
+        setCode(data.code || '');
       } catch (err) {
         setError('Failed to fetch journey details.');
         console.error(err);
@@ -42,6 +45,19 @@ export default function JourneyDetailPage() {
     };
     fetchJourneyData();
   }, [id]);
+
+  const handleSave = async () => {
+    if (!id || !journey) return;
+    try {
+      const updatedJourney = await updateJourney(id, { name: journey.name, code });
+      setJourney(updatedJourney);
+      setCode(updatedJourney.code || '');
+      alert('Journey updated successfully!');
+    } catch (err) {
+      setError('Failed to update journey.');
+      console.error(err);
+    }
+  };
 
   if (loading) {
     return (
@@ -122,6 +138,21 @@ export default function JourneyDetailPage() {
             </ListItem>
           ))}
         </List>
+
+        <Divider sx={{ my: 2 }} />
+
+        <Typography variant="h6" gutterBottom>
+          Code
+        </Typography>
+        <TextareaAutosize
+          minRows={10}
+          style={{ width: '100%', fontFamily: 'monospace', padding: '8px' }}
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+        />
+        <Button variant="contained" onClick={handleSave} sx={{ mt: 2 }}>
+          Save Code
+        </Button>
 
         {journey.lastRun?.testResult && (
           <>
