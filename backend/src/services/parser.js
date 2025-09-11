@@ -141,16 +141,6 @@ async function parsePlaywrightCode(code) {
   return steps;
 }
 
-// We need to update the import route to use the parser
-const importJourney = async (name, code) => {
-    const steps = await parsePlaywrightCode(code);
-    // Here you would typically save the journey to the database
-    // For now, let's just return the parsed data
-    return { name, steps };
-};
-
-
 module.exports = {
   parsePlaywrightCode,
-  importJourney,
 };
