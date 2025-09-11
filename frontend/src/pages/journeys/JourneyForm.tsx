@@ -50,6 +50,13 @@ export default function JourneyForm({
     const newSteps = [...steps];
     if (field === 'action') {
       newSteps[index] = { ...newSteps[index], action: value, params: {} }; // Reset params on action change
+    } else if (field === 'selector' && typeof value === 'string') {
+      try {
+        newSteps[index].params.selector = JSON.parse(value);
+      } catch (e) {
+        // If parsing fails, it's probably a simple string selector
+        newSteps[index].params.selector = value;
+      }
     } else if (field in newSteps[index]) {
       (newSteps[index] as any)[field] = value;
     } else {
@@ -133,10 +140,12 @@ export default function JourneyForm({
         return (
           <TextField
             label="Selector"
-            value={step.params.selector || ''}
+            value={typeof step.params.selector === 'object' ? JSON.stringify(step.params.selector, null, 2) : step.params.selector || ''}
             onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
             fullWidth
             required
+            multiline
+            rows={4}
           />
         );
       case 'type':
@@ -145,10 +154,12 @@ export default function JourneyForm({
             <Grid item xs={6}>
               <TextField
                 label="Selector"
-                value={step.params.selector || ''}
+                value={typeof step.params.selector === 'object' ? JSON.stringify(step.params.selector, null, 2) : step.params.selector || ''}
                 onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
                 fullWidth
                 required
+                multiline
+                rows={4}
               />
             </Grid>
             <Grid item xs={6}>
@@ -173,10 +184,12 @@ export default function JourneyForm({
         return (
           <TextField
             label="Selector"
-            value={step.params.selector || ''}
+            value={typeof step.params.selector === 'object' ? JSON.stringify(step.params.selector, null, 2) : step.params.selector || ''}
             onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
             fullWidth
             required
+            multiline
+            rows={4}
           />
         );
       case 'toHaveText':
@@ -185,10 +198,12 @@ export default function JourneyForm({
             <Grid item xs={6}>
               <TextField
                 label="Selector"
-                value={step.params.selector || ''}
+                value={typeof step.params.selector === 'object' ? JSON.stringify(step.params.selector, null, 2) : step.params.selector || ''}
                 onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
                 fullWidth
                 required
+                multiline
+                rows={4}
               />
             </Grid>
             <Grid item xs={6}>
@@ -215,10 +230,12 @@ export default function JourneyForm({
             <Grid item xs={4}>
               <TextField
                 label="Selector"
-                value={step.params.selector || ''}
+                value={typeof step.params.selector === 'object' ? JSON.stringify(step.params.selector, null, 2) : step.params.selector || ''}
                 onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
                 fullWidth
                 required
+                multiline
+                rows={4}
               />
             </Grid>
             <Grid item xs={4}>
