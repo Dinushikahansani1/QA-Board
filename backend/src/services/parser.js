@@ -37,7 +37,7 @@ function convertNodeToValue(node) {
  * Parses a Playwright script file and extracts the sequence of actions
  * into our application's journey step format.
  * @param {string} filePath The path to the Playwright script file.
- * @returns {Promise<Array>} A promise that resolves to an array of journey steps.
+ * @returns {Promise<Object>} A promise that resolves to an object containing journey steps and the domain.
  */
 async function parsePlaywrightCode(filePath) {
   const code = await fs.readFile(filePath, 'utf-8');
@@ -48,6 +48,7 @@ async function parsePlaywrightCode(filePath) {
   });
 
   const steps = [];
+  let domain = '';
 
   traverse(ast, {
     AwaitExpression(path) {
@@ -61,6 +62,14 @@ async function parsePlaywrightCode(filePath) {
         const url = convertNodeToValue(awaitArg.arguments[0]);
         if (url) {
           steps.push({ action: 'goto', params: { url } });
+          if (!domain) {
+            try {
+              const urlObject = new URL(url);
+              domain = urlObject.hostname;
+            } catch (e) {
+              // Invalid URL, ignore
+            }
+          }
         }
       }
 
@@ -90,7 +99,7 @@ async function parsePlaywrightCode(filePath) {
     },
   });
 
-  return steps;
+  return { steps, domain };
 }
 
 module.exports = {

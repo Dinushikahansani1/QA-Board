@@ -1,8 +1,11 @@
 const router = require('express').Router();
+const fs = require('fs').promises;
+const path = require('path');
 const Journey = require('../models/Journey');
 const authMiddleware = require('../middleware/auth');
 const { runJourney } = require('../services/automation');
 const { generateJourneyFromText } = require('../services/llm');
+const { parsePlaywrightCode } = require('../services/parser');
 
 // Use auth middleware for all journey routes
 router.use(authMiddleware);
@@ -65,16 +68,37 @@ router.get('/:id', async (req, res) => {
 // PUT /journeys/:id - Update a journey
 router.put('/:id', async (req, res) => {
   try {
-    const { name, domain, steps } = req.body;
-    const journey = await Journey.findOneAndUpdate(
-      { _id: req.params.id, user: req.user.id },
-      { name, domain, steps },
-      { new: true }
-    );
-    if (!journey) {
+    const { name, code } = req.body;
+    const journeyToUpdate = await Journey.findOne({ _id: req.params.id, user: req.user.id });
+
+    if (!journeyToUpdate) {
       return res.status(404).json({ error: 'Journey not found' });
     }
-    res.json(journey);
+
+    const updateData = { name: name || journeyToUpdate.name };
+
+    if (code) {
+      const tempDir = path.join(__dirname, '..', '..', 'temp_journeys');
+      await fs.mkdir(tempDir, { recursive: true });
+      const tempFile = path.join(tempDir, `update-${Date.now()}.js`);
+      await fs.writeFile(tempFile, code);
+
+      const { steps, domain } = await parsePlaywrightCode(tempFile);
+
+      updateData.steps = steps;
+      updateData.domain = domain;
+      updateData.code = code;
+
+      await fs.unlink(tempFile);
+    }
+
+    const updatedJourney = await Journey.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true }
+    );
+
+    res.json(updatedJourney);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

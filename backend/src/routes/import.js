@@ -20,7 +20,7 @@ router.post('/journey', async (req, res) => {
   try {
     await fs.writeFile(tempFile, code);
 
-    const steps = await parsePlaywrightCode(tempFile);
+    const { steps, domain } = await parsePlaywrightCode(tempFile);
 
     if (steps.length === 0) {
       return res.status(400).json({ error: 'Could not parse any actionable steps from the code provided.' });
@@ -28,7 +28,9 @@ router.post('/journey', async (req, res) => {
 
     const journey = await Journey.create({
       name,
+      domain,
       steps,
+      code,
       user: req.user.id,
     });
 
