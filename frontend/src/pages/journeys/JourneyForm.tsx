@@ -18,6 +18,7 @@ import {
 import { AddCircle, Delete, VpnKey } from '@mui/icons-material';
 import type { JourneyStep } from '../../api/journeys';
 import { getSecrets, type Secret } from '../../api/secrets';
+import { formatSelector } from '../../utils/formatters';
 
 interface JourneyFormProps {
   onSubmit: (data: { name: string; domain: string; steps: JourneyStep[] }) => void;
@@ -46,14 +47,24 @@ export default function JourneyForm({
     getSecrets().then(setSecrets).catch(err => console.error("Failed to fetch secrets", err));
   }, []);
 
-  const handleStepChange = (index: number, field: keyof JourneyStep | keyof JourneyStep['params'], value: any) => {
+  const handleStepChange = (
+    index: number,
+    field: keyof JourneyStep | keyof JourneyStep['params'],
+    value: string
+  ) => {
     const newSteps = [...steps];
+    const step = newSteps[index];
+
     if (field === 'action') {
-      newSteps[index] = { ...newSteps[index], action: value, params: {} }; // Reset params on action change
-    } else if (field in newSteps[index]) {
-      (newSteps[index] as any)[field] = value;
+      step.action = value as JourneyStep['action'];
+      step.params = {}; // Reset params on action change
+    } else if (field in step) {
+      // This is a top-level field like 'name' if we were editing it directly in the step
+      // Not currently used, but safe-guarding the type.
+      (step as any)[field] = value;
     } else {
-      newSteps[index].params = { ...newSteps[index].params, [field]: value };
+      // This is a param field like 'url', 'selector', 'text'
+      step.params = { ...step.params, [field]: value };
     }
     setSteps(newSteps);
   };
@@ -133,10 +144,13 @@ export default function JourneyForm({
         return (
           <TextField
             label="Selector"
-            value={step.params.selector || ''}
+            value={formatSelector(step.params.selector) || ''}
             onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
             fullWidth
             required
+            InputProps={{
+              readOnly: typeof step.params.selector === 'object',
+            }}
           />
         );
       case 'type':
@@ -145,10 +159,13 @@ export default function JourneyForm({
             <Grid item xs={6}>
               <TextField
                 label="Selector"
-                value={step.params.selector || ''}
+                value={formatSelector(step.params.selector) || ''}
                 onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
                 fullWidth
                 required
+                InputProps={{
+                  readOnly: typeof step.params.selector === 'object',
+                }}
               />
             </Grid>
             <Grid item xs={6}>
@@ -175,10 +192,13 @@ export default function JourneyForm({
             <Grid item xs={6}>
               <TextField
                 label="Selector"
-                value={step.params.selector || ''}
+                value={formatSelector(step.params.selector) || ''}
                 onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
                 fullWidth
                 required
+                InputProps={{
+                  readOnly: typeof step.params.selector === 'object',
+                }}
               />
             </Grid>
             <Grid item xs={6}>
@@ -198,10 +218,13 @@ export default function JourneyForm({
             <Grid item xs={6}>
               <TextField
                 label="Selector"
-                value={step.params.selector || ''}
+                value={formatSelector(step.params.selector) || ''}
                 onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
                 fullWidth
                 required
+                InputProps={{
+                  readOnly: typeof step.params.selector === 'object',
+                }}
               />
             </Grid>
             <Grid item xs={6}>
@@ -219,10 +242,13 @@ export default function JourneyForm({
         return (
           <TextField
             label="Selector"
-            value={step.params.selector || ''}
+            value={formatSelector(step.params.selector) || ''}
             onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
             fullWidth
             required
+            InputProps={{
+              readOnly: typeof step.params.selector === 'object',
+            }}
           />
         );
       case 'toHaveText':
@@ -232,10 +258,13 @@ export default function JourneyForm({
             <Grid item xs={6}>
               <TextField
                 label="Selector"
-                value={step.params.selector || ''}
+                value={formatSelector(step.params.selector) || ''}
                 onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
                 fullWidth
                 required
+                InputProps={{
+                  readOnly: typeof step.params.selector === 'object',
+                }}
               />
             </Grid>
             <Grid item xs={6}>
@@ -262,10 +291,13 @@ export default function JourneyForm({
             <Grid item xs={4}>
               <TextField
                 label="Selector"
-                value={step.params.selector || ''}
+                value={formatSelector(step.params.selector) || ''}
                 onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
                 fullWidth
                 required
+                InputProps={{
+                  readOnly: typeof step.params.selector === 'object',
+                }}
               />
             </Grid>
             <Grid item xs={4}>
