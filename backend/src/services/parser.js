@@ -54,7 +54,6 @@ async function parsePlaywrightCode(filePath) {
     AwaitExpression(path) {
       const awaitArg = path.node.argument;
       if (awaitArg.type !== 'CallExpression') return;
-
       const callee = awaitArg.callee;
 
       // Case 1: page.goto('...')
@@ -71,42 +70,15 @@ async function parsePlaywrightCode(filePath) {
             }
           }
         }
+        return; // Done with this expression
       }
 
-      // Case 2: Chained calls like page.getByRole(...).click() or page.locator(...).fill(...)
-      if (callee.type === 'MemberExpression' && (callee.property.name === 'click' || callee.property.name === 'fill')) {
-        const action = callee.property.name === 'click' ? 'click' : 'type';
-        const locatorCall = callee.object;
-
-        if (locatorCall.type === 'CallExpression' && locatorCall.callee.type === 'MemberExpression') {
-          const locatorCallee = locatorCall.callee;
-
-          if (locatorCallee.object.name === 'page') {
-            const selector = {
-              method: locatorCallee.property.name,
-              args: locatorCall.arguments.map(convertNodeToValue),
-            };
-
-            const params = { selector };
-            if (action === 'type') {
-              params.text = convertNodeToValue(awaitArg.arguments[0]);
-            }
-
-            steps.push({ action, params });
-          }
-        }
-      }
-
-      // Case 3: Assertions
+      // Case 2: Assertions
       let expectCall;
       let isNot = false;
-
-      if (callee.object.type === 'CallExpression' && callee.object.callee.name === 'expect') {
+      if (callee.type === 'MemberExpression' && callee.object.type === 'CallExpression' && callee.object.callee.name === 'expect') {
         expectCall = callee.object;
-      } else if (callee.object.type === 'MemberExpression' &&
-                 callee.object.property.name === 'not' &&
-                 callee.object.object.type === 'CallExpression' &&
-                 callee.object.object.callee.name === 'expect') {
+      } else if (callee.object.type === 'MemberExpression' && callee.object.property.name === 'not' && callee.object.object.type === 'CallExpression' && callee.object.object.callee.name === 'expect') {
         expectCall = callee.object.object;
         isNot = true;
       }
@@ -114,18 +86,17 @@ async function parsePlaywrightCode(filePath) {
       if (expectCall) {
         const action = callee.property.name;
         const locatorCall = expectCall.arguments[0];
-
+        // This part is tricky, the locator might be chained too.
+        // For now, assume simple locator for assertions.
         if (locatorCall.type === 'CallExpression' && locatorCall.callee.type === 'MemberExpression' && locatorCall.callee.object.name === 'page') {
           const selector = {
             method: locatorCall.callee.property.name,
             args: locatorCall.arguments.map(convertNodeToValue),
           };
-
           const params = { selector };
           if (isNot) {
             params.not = true;
           }
-
           if (awaitArg.arguments.length > 0) {
             if (action === 'toHaveText' || action === 'toContainText') {
               params.text = convertNodeToValue(awaitArg.arguments[0]);
@@ -134,8 +105,53 @@ async function parsePlaywrightCode(filePath) {
               params.value = convertNodeToValue(awaitArg.arguments[1]);
             }
           }
-
           steps.push({ action, params });
+        }
+        return; // Done with this expression
+      }
+
+      // Case 3: Chained calls
+      const buildSelector = (expression) => {
+        if (expression.type !== 'CallExpression' || expression.callee.type !== 'MemberExpression') {
+          return null;
+        }
+        const innerCallee = expression.callee;
+        const object = innerCallee.object;
+
+        if (object.type === 'Identifier' && object.name === 'page') {
+          return {
+            method: innerCallee.property.name,
+            args: expression.arguments.map(convertNodeToValue),
+            chain: [],
+          };
+        }
+
+        const baseSelector = buildSelector(object);
+        if (baseSelector) {
+          baseSelector.chain.push({
+            action: innerCallee.property.name,
+            args: expression.arguments.map(convertNodeToValue),
+          });
+          return baseSelector;
+        }
+        return null;
+      };
+
+      if (callee.type === 'MemberExpression') {
+        const finalAction = callee.property.name;
+        const selectorObject = buildSelector(callee.object);
+
+        if (selectorObject) {
+          const params = { selector: selectorObject };
+          const actionArgs = awaitArg.arguments.map(convertNodeToValue);
+          if (actionArgs.length > 0) {
+            if (finalAction === 'fill' || finalAction === 'type' || finalAction === 'press') {
+              params.text = actionArgs[0];
+            } else if (finalAction === 'selectOption') {
+              params.value = actionArgs[0];
+            }
+          }
+          steps.push({ action: finalAction, params });
         }
       }
     },
