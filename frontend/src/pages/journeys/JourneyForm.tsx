@@ -155,6 +155,7 @@ export default function JourneyForm({
             }}
           />
         );
+      case 'fill':
       case 'type':
         return (
           <>
@@ -374,6 +375,7 @@ export default function JourneyForm({
                     <MenuItem value="goto">Go To</MenuItem>
                     <MenuItem value="click">Click</MenuItem>
                     <MenuItem value="type">Type</MenuItem>
+                  <MenuItem value="fill">Fill</MenuItem>
                     <MenuItem value="press">Press Key</MenuItem>
                     <MenuItem value="selectOption">Select Option</MenuItem>
                     <MenuItem value="waitForSelector">Wait For Selector</MenuItem>
