@@ -100,6 +100,12 @@ async function runJourney(journey) {
             await locator.fill(processedParams.text); // Using fill is more robust for locators
           }
           break;
+        case 'fill':
+          {
+            const locator = getLocator(processedParams.selector);
+            await locator.fill(processedParams.text);
+          }
+          break;
         case 'waitForSelector':
           // This action is more for manual creation, recorded journeys will have better waits.
           await page.waitForSelector(processedParams.selector);
