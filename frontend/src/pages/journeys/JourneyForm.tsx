@@ -18,7 +18,6 @@ import {
 import { AddCircle, Delete, VpnKey } from '@mui/icons-material';
 import type { JourneyStep } from '../../api/journeys';
 import { getSecrets, type Secret } from '../../api/secrets';
-import { formatSelector } from '../../utils/formatters';
 
 interface JourneyFormProps {
   onSubmit: (data: { name: string; domain: string; steps: JourneyStep[] }) => void;
@@ -47,32 +46,20 @@ export default function JourneyForm({
     getSecrets().then(setSecrets).catch(err => console.error("Failed to fetch secrets", err));
   }, []);
 
-  const handleStepChange = (
-    index: number,
-    field: keyof JourneyStep | keyof JourneyStep['params'],
-    value: string
-  ) => {
+  const handleStepChange = (index: number, field: keyof JourneyStep | keyof JourneyStep['params'], value: any) => {
     const newSteps = [...steps];
-    const step = newSteps[index];
-
     if (field === 'action') {
-      step.action = value as JourneyStep['action'];
-      step.params = {}; // Reset params on action change
-    } else if (field in step) {
-      // This is a top-level field like 'name' if we were editing it directly in the step
-      // Not currently used, but safe-guarding the type.
-      (step as any)[field] = value;
+      newSteps[index] = { ...newSteps[index], action: value, params: {} }; // Reset params on action change
+    } else if (field in newSteps[index]) {
+      (newSteps[index] as any)[field] = value;
     } else {
-      // This is a param field like 'url', 'selector', 'text'
-      step.params = { ...step.params, [field]: value };
+      newSteps[index].params = { ...newSteps[index].params, [field]: value };
     }
     setSteps(newSteps);
   };
 
-  const insertStep = (index: number) => {
-    const newSteps = [...steps];
-    newSteps.splice(index, 0, { ...defaultStep });
-    setSteps(newSteps);
+  const addStep = () => {
+    setSteps([...steps, { ...defaultStep }]);
   };
 
   const removeStep = (index: number) => {
@@ -146,29 +133,22 @@ export default function JourneyForm({
         return (
           <TextField
             label="Selector"
-            value={formatSelector(step.params.selector) || ''}
+            value={step.params.selector || ''}
             onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
             fullWidth
             required
-            InputProps={{
-              readOnly: typeof step.params.selector === 'object',
-            }}
           />
         );
-      case 'fill':
       case 'type':
         return (
           <>
             <Grid item xs={6}>
               <TextField
                 label="Selector"
-                value={formatSelector(step.params.selector) || ''}
+                value={step.params.selector || ''}
                 onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
                 fullWidth
                 required
-                InputProps={{
-                  readOnly: typeof step.params.selector === 'object',
-                }}
               />
             </Grid>
             <Grid item xs={6}>
@@ -195,13 +175,10 @@ export default function JourneyForm({
             <Grid item xs={6}>
               <TextField
                 label="Selector"
-                value={formatSelector(step.params.selector) || ''}
+                value={step.params.selector || ''}
                 onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
                 fullWidth
                 required
-                InputProps={{
-                  readOnly: typeof step.params.selector === 'object',
-                }}
               />
             </Grid>
             <Grid item xs={6}>
@@ -221,13 +198,10 @@ export default function JourneyForm({
             <Grid item xs={6}>
               <TextField
                 label="Selector"
-                value={formatSelector(step.params.selector) || ''}
+                value={step.params.selector || ''}
                 onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
                 fullWidth
                 required
-                InputProps={{
-                  readOnly: typeof step.params.selector === 'object',
-                }}
               />
             </Grid>
             <Grid item xs={6}>
@@ -245,13 +219,10 @@ export default function JourneyForm({
         return (
           <TextField
             label="Selector"
-            value={formatSelector(step.params.selector) || ''}
+            value={step.params.selector || ''}
             onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
             fullWidth
             required
-            InputProps={{
-              readOnly: typeof step.params.selector === 'object',
-            }}
           />
         );
       case 'toHaveText':
@@ -261,13 +232,10 @@ export default function JourneyForm({
             <Grid item xs={6}>
               <TextField
                 label="Selector"
-                value={formatSelector(step.params.selector) || ''}
+                value={step.params.selector || ''}
                 onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
                 fullWidth
                 required
-                InputProps={{
-                  readOnly: typeof step.params.selector === 'object',
-                }}
               />
             </Grid>
             <Grid item xs={6}>
@@ -294,13 +262,10 @@ export default function JourneyForm({
             <Grid item xs={4}>
               <TextField
                 label="Selector"
-                value={formatSelector(step.params.selector) || ''}
+                value={step.params.selector || ''}
                 onChange={(e) => handleStepChange(index, 'selector', e.target.value)}
                 fullWidth
                 required
-                InputProps={{
-                  readOnly: typeof step.params.selector === 'object',
-                }}
               />
             </Grid>
             <Grid item xs={4}>
@@ -361,58 +326,50 @@ export default function JourneyForm({
       <Typography variant="h6" sx={{ mb: 1 }}>Steps</Typography>
 
       {steps.map((step, index) => (
-        <React.Fragment key={index}>
-          <Paper sx={{ p: 2, mb: 1 }}>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item xs={12} sm={4}>
-                <FormControl fullWidth>
-                  <InputLabel>Action</InputLabel>
-                  <Select
-                    value={step.action}
-                    label="Action"
-                    onChange={(e) => handleStepChange(index, 'action', e.target.value)}
-                  >
-                    <MenuItem value="goto">Go To</MenuItem>
-                    <MenuItem value="click">Click</MenuItem>
-                    <MenuItem value="type">Type</MenuItem>
-                  <MenuItem value="fill">Fill</MenuItem>
-                    <MenuItem value="press">Press Key</MenuItem>
-                    <MenuItem value="selectOption">Select Option</MenuItem>
-                    <MenuItem value="waitForSelector">Wait For Selector</MenuItem>
-                    <MenuItem value="toBeVisible">Is Visible</MenuItem>
-                    <MenuItem value="toHaveText">Has Text</MenuItem>
-                    <MenuItem value="toContainText">Contains Text</MenuItem>
-                    <MenuItem value="toHaveAttribute">Has Attribute</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={7}>
-                <Grid container spacing={2}>
-                  {renderStepParams(step, index)}
-                </Grid>
-              </Grid>
-              <Grid item xs={12} sm={1}>
-                <IconButton onClick={() => removeStep(index)} color="error" title="Remove Step">
-                  <Delete />
-                </IconButton>
+        <Paper key={index} sx={{ p: 2, mb: 2 }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth>
+                <InputLabel>Action</InputLabel>
+                <Select
+                  value={step.action}
+                  label="Action"
+                  onChange={(e) => handleStepChange(index, 'action', e.target.value)}
+                >
+                  <MenuItem value="goto">Go To</MenuItem>
+                  <MenuItem value="click">Click</MenuItem>
+                  <MenuItem value="type">Type</MenuItem>
+                  <MenuItem value="press">Press Key</MenuItem>
+                  <MenuItem value="selectOption">Select Option</MenuItem>
+                  <MenuItem value="waitForSelector">Wait For Selector</MenuItem>
+                  <MenuItem value="toBeVisible">Is Visible</MenuItem>
+                  <MenuItem value="toHaveText">Has Text</MenuItem>
+                  <MenuItem value="toContainText">Contains Text</MenuItem>
+                  <MenuItem value="toHaveAttribute">Has Attribute</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={7}>
+              <Grid container spacing={2}>
+                {renderStepParams(step, index)}
               </Grid>
             </Grid>
-          </Paper>
-          <Box sx={{ display: 'flex', justifyContent: 'center', my: 0.5 }}>
-            <IconButton onClick={() => insertStep(index + 1)} size="small" title="Insert Step Below">
-              <AddCircle sx={{ color: 'action.active' }} />
-            </IconButton>
-          </Box>
-        </React.Fragment>
+            <Grid item xs={12} sm={1}>
+              <IconButton onClick={() => removeStep(index)} color="error">
+                <Delete />
+              </IconButton>
+            </Grid>
+          </Grid>
+        </Paper>
       ))}
 
       <Button
         type="button"
-        onClick={() => insertStep(0)}
+        onClick={addStep}
         startIcon={<AddCircle />}
         sx={{ mr: 2 }}
       >
-        Add Step to Top
+        Add Step
       </Button>
 
       <Button type="submit" variant="contained" sx={{ mr: 2 }}>

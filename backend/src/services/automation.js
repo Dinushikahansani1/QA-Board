@@ -1,4 +1,5 @@
-const { chromium, expect } = require('playwright');
+const { chromium } = require('playwright');
+const { expect } = require('@playwright/test');
 const Journey = require('../models/Journey');
 const Secret = require('../models/Secret');
 const { decrypt } = require('./encryption');
@@ -98,12 +99,6 @@ async function runJourney(journey) {
           {
             const locator = getLocator(processedParams.selector);
             await locator.fill(processedParams.text); // Using fill is more robust for locators
-          }
-          break;
-        case 'fill':
-          {
-            const locator = getLocator(processedParams.selector);
-            await locator.fill(processedParams.text);
           }
           break;
         case 'waitForSelector':

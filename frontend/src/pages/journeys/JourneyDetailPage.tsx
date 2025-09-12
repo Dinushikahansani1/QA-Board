@@ -14,9 +14,8 @@ import {
   Chip,
   Button,
 } from '@mui/material';
-import { getJourney, type Journey, type JourneyStep } from '../../api/journeys';
+import { getJourney, type Journey, type TestResult } from '../../api/journeys';
 import { ArrowBack } from '@mui/icons-material';
-import { formatSelector } from '../../utils/formatters';
 
 export default function JourneyDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -72,24 +71,6 @@ export default function JourneyDetailPage() {
     }
   }
 
-  const renderStepParams = (step: JourneyStep) => {
-    const params = Object.entries(step.params);
-    if (params.length === 0) return null;
-
-    return (
-       <Box component="div" sx={{ pl: 2, mt: 1, fontFamily: 'monospace', fontSize: '0.875rem' }}>
-        {params.map(([key, value]) => (
-          <Box key={key} sx={{ display: 'flex' }}>
-            <Typography variant="body2" component="span" sx={{ fontWeight: '500', minWidth: '100px' }}>{key}:</Typography>
-            <Typography variant="body2" component="span" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                {key === 'selector' ? formatSelector(value) : JSON.stringify(value)}
-            </Typography>
-          </Box>
-        ))}
-      </Box>
-    );
-  };
-
   return (
     <Box sx={{ p: 3 }}>
       <Button component={RouterLink} to="/journeys" startIcon={<ArrowBack />} sx={{ mb: 2 }}>
@@ -132,7 +113,11 @@ export default function JourneyDetailPage() {
             <ListItem key={index} divider>
               <ListItemText
                 primary={<Typography variant="body1" component="span" sx={{ fontWeight: 'bold' }}>{step.action}</Typography>}
-                secondary={renderStepParams(step)}
+                secondary={
+                  <Box component="pre" sx={{ m: 0, p: 0, fontFamily: 'monospace', whiteSpace: 'pre-wrap' }}>
+                    {JSON.stringify(step.params, null, 2)}
+                  </Box>
+                }
               />
             </ListItem>
           ))}
